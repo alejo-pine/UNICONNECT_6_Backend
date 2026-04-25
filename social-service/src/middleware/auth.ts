@@ -1,0 +1,28 @@
+import { NextFunction, Request, Response } from 'express';
+import { AuthenticatedRequest } from '../shared/http/authenticatedRequest';
+import { AuthError, extractBearerToken, verifyAccessToken } from '../utils/jwtAuth';
+
+const sendError = (res: Response, statusCode: number, error: string): void => {
+  res.status(statusCode).json({ error, statusCode });
+};
+
+const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+  try {
+    const token = extractBearerToken(req.headers.authorization);
+    const claims = verifyAccessToken(token);
+
+    (req as AuthenticatedRequest).user = { id: claims.sub, email: claims.email };
+
+    next();
+  } catch (error: unknown) {
+    if (error instanceof AuthError) {
+      sendError(res, error.statusCode, error.message);
+      return;
+    }
+
+    console.error('[auth] Error inesperado:', error);
+    sendError(res, 500, 'Error interno del servidor');
+  }
+};
+
+export default authMiddleware;

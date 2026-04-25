@@ -1,0 +1,79 @@
+# =========================
+# Dependencias
+# =========================
+node_modules/
+
+# =========================
+# Build / Output
+# =========================
+dist/
+build/
+out/
+
+# =========================
+# Archivos de entorno
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Archivos del sistema
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Archivos de TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Cobertura de tests
+# =========================
+coverage/
+
+# =========================
+# Archivos temporales
+# =========================
+tmp/
+temp/
+
+# =========================
+# IDEs y editores
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Archivos de configuración local
+# =========================
+*.local
+
+# =========================
+# Socket.IO (opcional logs/debug)
+# =========================
+socket.io.log
+
+# =========================
+# Archivos de Docker (si usas)
+# =========================
+docker-compose.override.yml
+
+# =========================
+# Archivos de pruebas
+# =========================
+jest.config.js
+jest.setup.js

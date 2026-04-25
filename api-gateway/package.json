@@ -1,0 +1,41 @@
+{
+  "name": "api-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway for Uniconnect microservices",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test:connection": "tsx test-connection.ts",
+    "test:detailed": "tsx test-detailed.ts",
+    "test:auth-flow": "tsx test-auth-flow.ts",
+    "test": "npm run test:connection && npm run test:detailed && npm run test:auth-flow",
+    "lint": "eslint src/**/*.ts"
+  },
+  "keywords": [
+    "gateway",
+    "proxy",
+    "microservices"
+  ],
+  "author": "Uniconnect",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "helmet": "^7.2.0",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.12.7",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.5"
+  }
+}
