@@ -1,12 +1,18 @@
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import app from './app';
+import { attachSocketIoUpgradeProxy } from './realtime/socketProxy';
 
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-const server = app.listen(PORT, () => {
+const server = createServer(app);
+
+attachSocketIoUpgradeProxy(server);
+
+server.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════╗
 ║       🚀 API Gateway Started           ║

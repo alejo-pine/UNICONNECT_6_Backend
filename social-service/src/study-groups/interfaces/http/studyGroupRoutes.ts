@@ -3,12 +3,17 @@ import authMiddleware from '../../../middleware/auth';
 import { AuthenticatedRequest } from '../../../shared/http/authenticatedRequest';
 import { asyncHandler } from '../../../utils/controller';
 import {
+  acceptStudyGroupRequest,
   createStudyGroup,
   getAllStudyGroups,
   getAvailableStudyGroupsBySubject,
   getMyStudyGroups,
+  getStudyGroupDetail,
   joinStudyGroup,
   leaveStudyGroup,
+  respondAdminTransfer,
+  rejectStudyGroupRequest,
+  transferStudyGroupAdmin,
 } from './studyGroupController';
 
 const router: Router = Router();
@@ -37,6 +42,36 @@ router.post(
   '/:groupId/join',
   authMiddleware,
   asyncHandler((req, res) => joinStudyGroup(req as AuthenticatedRequest, res))
+);
+
+router.get(
+  '/:groupId',
+  authMiddleware,
+  asyncHandler((req, res) => getStudyGroupDetail(req as AuthenticatedRequest, res))
+);
+
+router.post(
+  '/:groupId/requests/:userId/accept',
+  authMiddleware,
+  asyncHandler((req, res) => acceptStudyGroupRequest(req as AuthenticatedRequest, res))
+);
+
+router.post(
+  '/:groupId/requests/:userId/reject',
+  authMiddleware,
+  asyncHandler((req, res) => rejectStudyGroupRequest(req as AuthenticatedRequest, res))
+);
+
+router.post(
+  '/:groupId/transfer-admin',
+  authMiddleware,
+  asyncHandler((req, res) => transferStudyGroupAdmin(req as AuthenticatedRequest, res))
+);
+
+router.post(
+  '/:groupId/transfer-admin/respond',
+  authMiddleware,
+  asyncHandler((req, res) => respondAdminTransfer(req as AuthenticatedRequest, res))
 );
 
 router.post(

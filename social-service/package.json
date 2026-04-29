@@ -10,7 +10,12 @@
     "start": "node dist/server.js",
     "lint": "eslint src/**/*.ts"
   },
-  "keywords": ["social", "study-groups", "events", "microservice"],
+  "keywords": [
+    "social",
+    "study-groups",
+    "events",
+    "microservice"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
@@ -21,7 +26,8 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

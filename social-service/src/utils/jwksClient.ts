@@ -3,6 +3,27 @@ import { env } from '../config/env';
 
 const keyCache = new Map<string, KeyObject>();
 
+interface JsonWebKey {
+  kty: string;
+  use?: string;
+  key_ops?: string[];
+  alg?: string;
+  crv?: string;
+  x?: string;
+  y?: string;
+  d?: string;
+  n?: string;
+  e?: string;
+  p?: string;
+  q?: string;
+  dp?: string;
+  dq?: string;
+  qi?: string;
+  oth?: Array<{ r?: string; d?: string; t?: string }>;
+  k?: string;
+  [key: string]: unknown;
+}
+
 interface JWKSet {
   keys: (JsonWebKey & { kid?: string })[];
 }
