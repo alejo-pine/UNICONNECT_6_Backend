@@ -1,5 +1,6 @@
 import { HttpError } from '../../../utils/httpError';
 import { eventLogger } from '../../../utils/eventLogger';
+import { studyGroupRealtimeBus } from '../../../realtime/studyGroupRealtime';
 import { StudyGroupResponse } from '../../domain/entities/studyGroup';
 import { StudyGroupRepositoryPort } from '../../domain/ports/studyGroupRepositoryPort';
 import { ServiceResult } from '../dto/studyGroupDto';
@@ -23,16 +24,54 @@ export class LeaveStudyGroupUseCase {
         throw new HttpError(404, 'Study group not found');
       }
 
-      if (group.creatorId === command.profileId) {
-        throw new HttpError(403, 'Group creator cannot leave the group');
-      }
-
       const isMember = await this.studyGroupRepository.isMember(command.profileId, command.groupId);
       if (!isMember) {
         throw new HttpError(404, 'You are not a member of this group');
       }
 
+      // Block any leave operation while an admin transfer is pending.
+      const pendingTransfer = await this.studyGroupRepository.getPendingAdminTransfer(command.groupId);
+      if (pendingTransfer && pendingTransfer.status === 'pending') {
+        throw new HttpError(
+          409,
+          'Debes completar la transferencia de administración antes de salir'
+        );
+      }
+
+      if (group.creatorId === command.profileId) {
+        const detail = await this.studyGroupRepository.findDetailById(command.groupId);
+        if (!detail) {
+          throw new HttpError(404, 'Study group not found');
+        }
+
+        const otherMembers = detail.members.filter((memberId) => memberId !== command.profileId);
+        if (otherMembers.length > 0) {
+          throw new HttpError(
+            409,
+            'Admin must transfer group administration before leaving while other members exist'
+          );
+        }
+      }
+
       await this.studyGroupRepository.removeMember(command.profileId, command.groupId);
+
+      eventLogger.info('LeaveStudyGroupUseCase.execute', 'User left study group', {
+        groupId: command.groupId,
+        profileId: command.profileId,
+      });
+
+      // Emit realtime event so remaining members see the update
+      const updatedGroupAfterLeave = await this.studyGroupRepository.findDetailById(command.groupId);
+      if (updatedGroupAfterLeave) {
+        studyGroupRealtimeBus.publishStudyGroupUpdated({
+          groupId: command.groupId,
+          action: 'member_left',
+          requestedUserId: command.profileId,
+          actorUserId: command.profileId,
+          updatedGroup: updatedGroupAfterLeave,
+          timestamp: new Date().toISOString(),
+        });
+      }
 
       return {
         data: {

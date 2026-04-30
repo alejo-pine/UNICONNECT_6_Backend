@@ -14,9 +14,26 @@ export interface StudyGroup {
 
 export interface StudyGroupWithSubject extends StudyGroup {
   subject?: SubjectSummary;
+  member_count?: number;
 }
 
 export interface StudyGroupResponse extends StudyGroupWithSubject {
   isAdmin: boolean;
   isMember: boolean;
+}
+
+export interface PendingAdminTransfer {
+  fromUserId: string;
+  toUserId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+export interface StudyGroupDetailResponse {
+  id: string;
+  name: string;
+  createdBy: string;
+  members: string[];
+  pendingRequests: string[];
+  subject?: SubjectSummary;
+  pendingAdminTransfer?: PendingAdminTransfer;
 }
