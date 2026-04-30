@@ -299,47 +299,6 @@ export const transferStudyGroupAdmin = async (
   }
 };
 
-export const initiateAdminTransfer = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    if (!req.user?.id) {
-      throw new HttpError(401, 'Authentication required');
-    }
-
-    if (typeof req.body !== 'object' || req.body === null) {
-      throw new HttpError(400, 'Request body must be a JSON object');
-    }
-
-    const payload = req.body as Record<string, unknown>;
-    const newAdminUserId =
-      typeof payload.newAdminUserId === 'string' ? payload.newAdminUserId.trim() : '';
-    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
-
-    if (!groupId) {
-      throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
-    }
-
-    if (!newAdminUserId) {
-      throw new HttpError(400, 'Field "newAdminUserId" is required and must be a non-empty string');
-    }
-
-    const result = await studyGroupDependencies.initiateAdminTransferUseCase.execute({
-      groupId,
-      currentUserId: req.user.id,
-      newAdminUserId,
-    });
-
-    sendServiceResult(res, result);
-  } catch (err: unknown) {
-    handleControllerError(err, res, 'studyGroupController.initiateAdminTransfer', {
-      userId: (req.user as { id?: string } | undefined)?.id,
-      groupId: req.params?.groupId,
-    });
-  }
-};
-
 export const respondAdminTransfer = async (
   req: AuthenticatedRequest,
   res: Response

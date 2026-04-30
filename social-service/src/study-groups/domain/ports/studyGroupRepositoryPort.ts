@@ -25,4 +25,5 @@ export interface StudyGroupRepositoryPort {
   setPendingAdminTransfer(groupId: string, fromUserId: string, toUserId: string): Promise<void>;
   clearPendingAdminTransfer(groupId: string): Promise<void>;
   acceptAdminTransfer(groupId: string): Promise<void>;
+  countBySubject(subjectId: string): Promise<number>;
 }

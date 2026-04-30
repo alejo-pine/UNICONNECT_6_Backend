@@ -9,7 +9,7 @@ export const STUDY_GROUP_ADMIN_TRANSFER_REQUESTED_EVENT = 'admin_transfer_reques
 export const STUDY_GROUP_ADMIN_TRANSFER_ACCEPTED_EVENT = 'admin_transfer_accepted';
 export const STUDY_GROUP_ADMIN_TRANSFER_REJECTED_EVENT = 'admin_transfer_rejected';
 
-export type StudyGroupRealtimeAction = 'request_accepted' | 'request_rejected';
+export type StudyGroupRealtimeAction = 'request_accepted' | 'request_rejected' | 'join_request_sent' | 'member_left' | 'group_created';
 
 export interface StudyGroupUpdatedPayload {
   groupId: string;
@@ -17,6 +17,20 @@ export interface StudyGroupUpdatedPayload {
   requestedUserId: string;
   actorUserId: string;
   updatedGroup: StudyGroupDetailResponse;
+  timestamp: string;
+}
+
+/**
+ * Normalized payload emitted over the wire to Socket.IO clients.
+ * Flattens updatedGroup so the frontend receives members/pendingRequests
+ * at the root level (matches the StudyGroupRealtimePayload interface in the frontend).
+ */
+export interface StudyGroupUpdatedSocketPayload {
+  groupId: string;
+  action: StudyGroupRealtimeAction;
+  members: string[];
+  pendingRequests: string[];
+  createdBy?: string;
   timestamp: string;
 }
 

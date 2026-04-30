@@ -8,16 +8,25 @@ const proxy = createProxyServer({
   ws: true,
 });
 
-(proxy as any).on('error', (error: Error, req: IncomingMessage, res: ServerResponse) => {
-  const message = error instanceof Error ? error.message : 'Unknown proxy error';
+(proxy as any).on('error', (error: Error, req: IncomingMessage, res: ServerResponse | any) => {
+  try {
+    const message = error instanceof Error ? error.message : 'Unknown proxy error';
 
-  if (res && !res.headersSent) {
-    res.writeHead(502, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Bad Gateway', message }));
-    return;
+    if (res && typeof res.writeHead === 'function' && !res.headersSent) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Bad Gateway', message }));
+      return;
+    }
+
+    // If it's a socket (from WS upgrade), just end it
+    if (res && typeof res.end === 'function') {
+      res.end();
+    }
+
+    console.error('[SocketProxy] Proxy error', message, req?.url);
+  } catch {
+    // Absorb any secondary errors from already-destroyed sockets
   }
-
-  console.error('[SocketProxy] Proxy error', message, req?.url);
 });
 
 export const socketIoProxyMiddleware = (req: Request, res: Response, next: NextFunction): void => {

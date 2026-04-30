@@ -1,5 +1,6 @@
 import { HttpError } from '../../../utils/httpError';
 import { eventLogger } from '../../../utils/eventLogger';
+import { studyGroupRealtimeBus } from '../../../realtime/studyGroupRealtime';
 import { StudyGroupResponse } from '../../domain/entities/studyGroup';
 import { StudyGroupRepositoryPort } from '../../domain/ports/studyGroupRepositoryPort';
 import { ServiceResult } from '../dto/studyGroupDto';
@@ -58,7 +59,19 @@ export class LeaveStudyGroupUseCase {
         groupId: command.groupId,
         profileId: command.profileId,
       });
-      // Hook point for domain events (e.g., notify clients asynchronously).
+
+      // Emit realtime event so remaining members see the update
+      const updatedGroupAfterLeave = await this.studyGroupRepository.findDetailById(command.groupId);
+      if (updatedGroupAfterLeave) {
+        studyGroupRealtimeBus.publishStudyGroupUpdated({
+          groupId: command.groupId,
+          action: 'member_left',
+          requestedUserId: command.profileId,
+          actorUserId: command.profileId,
+          updatedGroup: updatedGroupAfterLeave,
+          timestamp: new Date().toISOString(),
+        });
+      }
 
       return {
         data: {

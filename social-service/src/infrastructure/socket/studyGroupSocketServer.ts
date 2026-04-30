@@ -12,6 +12,7 @@ import {
   STUDY_GROUP_ADMIN_TRANSFER_REJECTED_EVENT,
   studyGroupRealtimeBus,
   StudyGroupUpdatedPayload,
+  StudyGroupUpdatedSocketPayload,
   AdminTransferEventPayload,
 } from '../../realtime/studyGroupRealtime';
 
@@ -21,6 +22,7 @@ let ioInstance: SocketIOServer | null = null;
 let isObserverRegistered = false;
 
 const getRoomName = (groupId: string): string => `${STUDY_GROUP_ROOM_PREFIX}${groupId}`;
+const getUserRoomName = (userId: string): string => `user:${userId}`;
 
 const getUserIdFromSocket = (socket: StudyGroupSocket): string => {
   const userId = socket.data?.userId;
@@ -32,7 +34,18 @@ const emitStudyGroupUpdate = (payload: StudyGroupUpdatedPayload): void => {
     return;
   }
 
-  ioInstance.to(getRoomName(payload.groupId)).emit(STUDY_GROUP_UPDATED_EVENT, payload);
+  // Flatten the payload: send members/pendingRequests at root level
+  // so the frontend can consume them without drilling into updatedGroup.
+  const socketPayload: StudyGroupUpdatedSocketPayload = {
+    groupId: payload.groupId,
+    action: payload.action,
+    members: payload.updatedGroup.members ?? [],
+    pendingRequests: payload.updatedGroup.pendingRequests ?? [],
+    createdBy: payload.updatedGroup.createdBy,
+    timestamp: payload.timestamp,
+  };
+
+  ioInstance.to(getRoomName(payload.groupId)).emit(STUDY_GROUP_UPDATED_EVENT, socketPayload);
 };
 
 const emitAdminTransferEvent = (eventName: string, payload: AdminTransferEventPayload): void => {
@@ -40,12 +53,13 @@ const emitAdminTransferEvent = (eventName: string, payload: AdminTransferEventPa
     return;
   }
 
-  // Emit to the group room
+  // Emit to the group room (covers the admin who initiated + any member already on that page)
   ioInstance.to(getRoomName(payload.groupId)).emit(eventName, payload);
 
-  // Emit directly to the target user so the notification arrives even if the room is not joined.
+  // Emit to the candidate's personal room so the notification arrives
+  // even if they are not currently viewing that specific group page.
   if (payload.toUserId.trim()) {
-    ioInstance.to(payload.toUserId).emit(eventName, payload);
+    ioInstance.to(getUserRoomName(payload.toUserId)).emit(eventName, payload);
   }
 };
 
@@ -79,7 +93,19 @@ export const initStudyGroupSocketServer = (
     next();
   });
 
-  ioInstance.on('connection', (socket) => {
+  ioInstance.on('connection', async (socket) => {
+    // Auto-join the socket to a personal room so the backend can always
+    // target this user directly via ioInstance.to(`user:<userId>`).
+    const connectedUserId = getUserIdFromSocket(socket);
+    if (connectedUserId) {
+      await socket.join(getUserRoomName(connectedUserId));
+      eventLogger.info('StudyGroupSocketServer', 'Socket joined personal user room', {
+        socketId: socket.id,
+        userId: connectedUserId,
+        room: getUserRoomName(connectedUserId),
+      });
+    }
+
     socket.on(STUDY_GROUP_JOIN_EVENT, async (payload: { groupId?: string }) => {
       try {
         const groupId = typeof payload?.groupId === 'string' ? payload.groupId.trim() : '';

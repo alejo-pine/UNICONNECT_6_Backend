@@ -158,7 +158,8 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
           subject!subject_id(
             id,
             name
-          )
+          ),
+          group_member!group_id(profile_id)
         )
         `
       )
@@ -176,17 +177,29 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
         subject_id: string;
         creator_id: string;
         created_at: string;
-        subject: Array<SubjectSummary>;
+        subject: SubjectSummary | SubjectSummary[] | null;
+        group_member: Array<{ profile_id: string }> | null;
       }>;
     }>;
+
+    const resolveSubject = (
+      raw: SubjectSummary | SubjectSummary[] | null | undefined,
+    ): SubjectSummary | undefined => {
+      if (!raw) return undefined;
+      if (Array.isArray(raw)) return raw.length > 0 ? raw[0] : undefined;
+      if (typeof raw === 'object' && raw.id && raw.name) return raw;
+      return undefined;
+    };
 
     return rows
       .flatMap((row) => row.study_group || [])
       .map((group) => ({
         ...mapStudyGroup(group),
-        subject: Array.isArray(group.subject) && group.subject.length > 0 ? group.subject[0] : undefined,
+        subject: resolveSubject(group.subject),
+        member_count: Array.isArray(group.group_member) ? group.group_member.length : 0,
       }));
   }
+
 
   async findAll(limit: number): Promise<StudyGroupWithSubject[]> {
     const { data, error } = await supabase
@@ -560,5 +573,18 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
     if (error) {
       throw new Error(`Failed to remove member: ${error.message}`);
     }
+  }
+
+  async countBySubject(subjectId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from(STUDY_GROUPS_TABLE)
+      .select('id', { count: 'exact', head: true })
+      .eq('subject_id', subjectId);
+
+    if (error) {
+      throw new Error(`Failed to count groups by subject: ${error.message}`);
+    }
+
+    return count ?? 0;
   }
 }

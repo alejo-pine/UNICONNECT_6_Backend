@@ -14,6 +14,7 @@ export interface StudyGroup {
 
 export interface StudyGroupWithSubject extends StudyGroup {
   subject?: SubjectSummary;
+  member_count?: number;
 }
 
 export interface StudyGroupResponse extends StudyGroupWithSubject {
