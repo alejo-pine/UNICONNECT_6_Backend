@@ -1,0 +1,22 @@
+app = "uniconnect-social-service"
+primary_region = "dfw"
+
+[build]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+# Socket.IO requiere soporte de WebSockets
+[http_service]
+  internal_port = 3003
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
