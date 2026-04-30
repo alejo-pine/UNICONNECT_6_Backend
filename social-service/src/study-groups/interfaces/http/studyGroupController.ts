@@ -109,6 +109,27 @@ export const getAvailableStudyGroupsBySubject = async (
   }
 };
 
+export const getStudyGroupDetail = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
+    }
+
+    const result = await studyGroupDependencies.getStudyGroupDetailUseCase.execute(groupId);
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.getStudyGroupDetail', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
+
 export const joinStudyGroup = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) {
@@ -172,6 +193,7 @@ export const getGroupMembers = async (req: AuthenticatedRequest, res: Response):
     }
 
     const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+
     if (!groupId) {
       throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
     }
@@ -188,6 +210,160 @@ export const getGroupMembers = async (req: AuthenticatedRequest, res: Response):
     );
   } catch (err: unknown) {
     handleControllerError(err, res, 'studyGroupController.getGroupMembers', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
+
+export const acceptStudyGroupRequest = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    const requestedUserId = typeof req.params.userId === 'string' ? req.params.userId.trim() : '';
+
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
+    }
+
+    if (!requestedUserId) {
+      throw new HttpError(400, 'Field "userId" is required and must be a non-empty string');
+    }
+
+    const result = await studyGroupDependencies.acceptStudyGroupRequestUseCase.execute({
+      groupId,
+      currentUserId: req.user.id,
+      requestedUserId,
+    });
+
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.acceptStudyGroupRequest', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+      requestedUserId: req.params?.userId,
+    });
+  }
+};
+
+export const rejectStudyGroupRequest = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    const requestedUserId = typeof req.params.userId === 'string' ? req.params.userId.trim() : '';
+
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
+    }
+
+    if (!requestedUserId) {
+      throw new HttpError(400, 'Field "userId" is required and must be a non-empty string');
+    }
+
+    const result = await studyGroupDependencies.rejectStudyGroupRequestUseCase.execute({
+      groupId,
+      currentUserId: req.user.id,
+      requestedUserId,
+    });
+
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.rejectStudyGroupRequest', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+      requestedUserId: req.params?.userId,
+    });
+  }
+};
+
+export const transferStudyGroupAdmin = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    if (typeof req.body !== 'object' || req.body === null) {
+      throw new HttpError(400, 'Request body must be a JSON object');
+    }
+
+    const payload = req.body as Record<string, unknown>;
+    const newAdminUserId =
+      typeof payload.newAdminUserId === 'string' ? payload.newAdminUserId.trim() : '';
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
+    }
+
+    if (!newAdminUserId) {
+      throw new HttpError(400, 'Field "newAdminUserId" is required and must be a non-empty string');
+    }
+
+    const result = await studyGroupDependencies.initiateAdminTransferUseCase.execute({
+      groupId,
+      currentUserId: req.user.id,
+      newAdminUserId,
+    });
+
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.transferStudyGroupAdmin', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
+
+export const respondAdminTransfer = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    if (typeof req.body !== 'object' || req.body === null) {
+      throw new HttpError(400, 'Request body must be a JSON object');
+    }
+
+    const payload = req.body as Record<string, unknown>;
+    const action =
+      typeof payload.action === 'string' ? payload.action.trim() : '';
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
+    }
+
+    if (!action) {
+      throw new HttpError(400, 'Field "action" is required and must be a non-empty string');
+    }
+
+    const result = await studyGroupDependencies.respondAdminTransferUseCase.execute({
+      groupId,
+      respondingUserId: req.user.id,
+      action: action as 'accept' | 'reject',
+    });
+
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.respondAdminTransfer', {
       userId: (req.user as { id?: string } | undefined)?.id,
       groupId: req.params?.groupId,
     });

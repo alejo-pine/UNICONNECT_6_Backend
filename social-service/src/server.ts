@@ -1,10 +1,14 @@
 import express from 'express';
+import { createServer } from 'http';
 import { env } from './config/env';
 import { checkDatabaseConnection } from './config/database';
 import { initializeJWKS } from './utils/jwksClient';
+import { studyGroupRepository } from './study-groups/interfaces/http/dependencies';
 import studyGroupsRouter from './study-groups/interfaces/http/studyGroupRoutes';
 import eventsRouter from './events/interfaces/http/eventRoutes';
+import notificationRoutes from './notifications/interfaces/http/notificationRoutes';
 import app from './app';
+import { initStudyGroupSocketServer } from './infrastructure/socket/studyGroupSocketServer';
 
 // ============================================================================
 // MIDDLEWARE
@@ -16,6 +20,7 @@ app.use(express.json());
 // ============================================================================
 app.use('/study-groups', studyGroupsRouter);
 app.use('/events', eventsRouter);
+app.use('/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -44,9 +49,12 @@ const start = async (): Promise<void> => {
     }
     console.log('✅ Database connection verified');
 
+    const httpServer = createServer(app);
+    initStudyGroupSocketServer(httpServer, studyGroupRepository);
+
     // Start server
     const port = env.port;
-    app.listen(port, () => {
+    httpServer.listen(port, () => {
       console.log(`✅ Social-service running on port ${port}`);
       console.log(`   Environment: ${env.nodeEnv}`);
     });

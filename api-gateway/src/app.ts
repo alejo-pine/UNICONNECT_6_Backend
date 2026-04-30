@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { loggerMiddleware } from './middleware/logger';
+import { socketIoProxyMiddleware } from './realtime/socketProxy';
 import proxyRoutes from './routes/proxyRoutes';
 
 const app = express();
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(loggerMiddleware);
+app.use(socketIoProxyMiddleware);
 
 app.use(proxyRoutes);
 

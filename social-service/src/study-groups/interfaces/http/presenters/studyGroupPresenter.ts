@@ -13,6 +13,7 @@ interface StudyGroupApiResponse {
   };
   is_admin: boolean;
   is_member: boolean;
+  member_count: number;
 }
 
 export const toStudyGroupApiResponse = (input: StudyGroupResponse): StudyGroupApiResponse => ({
@@ -25,6 +26,7 @@ export const toStudyGroupApiResponse = (input: StudyGroupResponse): StudyGroupAp
   subject: input.subject,
   is_admin: input.isAdmin,
   is_member: input.isMember,
+  member_count: input.member_count ?? 0,
 });
 
 export const toStudyGroupApiResponseList = (inputs: StudyGroupResponse[]): StudyGroupApiResponse[] =>
