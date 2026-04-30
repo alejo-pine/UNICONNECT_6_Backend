@@ -6,6 +6,7 @@ import { GetMyStudyGroupsUseCase } from '../../application/use-cases/getMyStudyG
 import { GetStudyGroupDetailUseCase } from '../../application/use-cases/getStudyGroupDetailUseCase';
 import { JoinStudyGroupUseCase } from '../../application/use-cases/joinStudyGroupUseCase';
 import { LeaveStudyGroupUseCase } from '../../application/use-cases/leaveStudyGroupUseCase';
+import { GetStudyGroupMembersUseCase } from '../../application/use-cases/getStudyGroupMembers';
 import { InitiateAdminTransferUseCase } from '../../application/use-cases/initiateAdminTransferUseCase';
 import { RejectStudyGroupRequestUseCase } from '../../application/use-cases/rejectStudyGroupRequestUseCase';
 import { RespondAdminTransferUseCase } from '../../application/use-cases/respondAdminTransferUseCase';
@@ -29,4 +30,5 @@ export const studyGroupDependencies = {
   initiateAdminTransferUseCase: new InitiateAdminTransferUseCase(studyGroupRepository),
   respondAdminTransferUseCase: new RespondAdminTransferUseCase(studyGroupRepository),
   leaveStudyGroupUseCase: new LeaveStudyGroupUseCase(studyGroupRepository),
+  getStudyGroupMembersUseCase: new GetStudyGroupMembersUseCase(studyGroupRepository),
 };

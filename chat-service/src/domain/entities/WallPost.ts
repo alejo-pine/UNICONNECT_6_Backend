@@ -13,6 +13,8 @@ export interface WallPost {
   id: string;
   groupId: string;
   senderId: string;
+  senderName: string;
+  avatarUrl: string | null;
   content: string | null;
   attachments: WallPostAttachment[];
   createdAt: Date;

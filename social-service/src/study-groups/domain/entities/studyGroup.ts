@@ -22,6 +22,11 @@ export interface StudyGroupResponse extends StudyGroupWithSubject {
   isMember: boolean;
 }
 
+export interface GroupMember {
+  id: string;
+  name: string;
+}
+
 export interface PendingAdminTransfer {
   fromUserId: string;
   toUserId: string;

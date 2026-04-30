@@ -25,6 +25,7 @@ interface WallPostRow {
   content: string | null;
   created_at: string;
   wall_post_attachment: WallAttachmentRow[];
+  profile?: unknown;
 }
 
 function mapAttachmentRow(row: WallAttachmentRow): WallPostAttachment {
@@ -39,10 +40,15 @@ function mapAttachmentRow(row: WallAttachmentRow): WallPostAttachment {
 }
 
 function mapWallPostRow(row: WallPostRow): WallPost {
+  const profileData = row.profile as any;
+  const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+
   return {
     id: row.id,
     groupId: row.group_id,
     senderId: row.sender_id,
+    senderName: profile?.name ?? 'Unknown User',
+    avatarUrl: profile?.avatar_url ?? null,
     content: row.content,
     attachments: (row.wall_post_attachment ?? []).map(mapAttachmentRow),
     createdAt: new Date(row.created_at),
@@ -104,10 +110,21 @@ export class WallPostRepository implements IWallPostRepository {
       created_at: string;
     };
 
+    const { data: profileData } = await this.supabase
+      .from('profile')
+      .select('name, avatar_url')
+      .eq('id', input.senderId)
+      .maybeSingle();
+
+    const senderName = profileData?.name ?? 'Unknown User';
+    const avatarUrl = profileData?.avatar_url ?? null;
+
     return {
       id: rawPost.id,
       groupId: rawPost.group_id,
       senderId: rawPost.sender_id,
+      senderName,
+      avatarUrl,
       content: rawPost.content,
       attachments,
       createdAt: new Date(rawPost.created_at),
@@ -123,7 +140,7 @@ export class WallPostRepository implements IWallPostRepository {
     let query = this.supabase
       .from('wall_post')
       .select(
-        'id, group_id, sender_id, content, created_at, wall_post_attachment(id, post_id, file_name, file_type, file_size, bucket, storage_path, uploaded_at)'
+        'id, group_id, sender_id, content, created_at, wall_post_attachment(id, post_id, file_name, file_type, file_size, bucket, storage_path, uploaded_at), profile(name, avatar_url)'
       )
       .eq('group_id', groupId)
       .order('created_at', { ascending: false })

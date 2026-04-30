@@ -5,6 +5,7 @@ import {
   StudyGroupDetailResponse,
   StudyGroupWithSubject,
   SubjectSummary,
+  GroupMember,
 } from '../domain/entities/studyGroup';
 import { StudyGroupRepositoryPort } from '../domain/ports/studyGroupRepositoryPort';
 
@@ -573,6 +574,35 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
     if (error) {
       throw new Error(`Failed to remove member: ${error.message}`);
     }
+  }
+
+  async findMembers(groupId: string): Promise<GroupMember[]> {
+    const { data, error } = await supabase
+      .from(GROUP_MEMBERS_TABLE)
+      .select(`
+        profile_id,
+        profile!profile_id(
+          name
+        )
+      `)
+      .eq('group_id', groupId);
+
+    if (error) {
+      throw new Error(`Database query failed: ${error.message}`);
+    }
+
+    const rows = (data ?? []) as Array<{
+      profile_id: string;
+      profile?: { name: string } | { name: string }[];
+    }>;
+
+    return rows.map((row) => {
+      const p = Array.isArray(row.profile) ? row.profile[0] : row.profile;
+      return {
+        id: row.profile_id,
+        name: p?.name ?? 'Unknown User',
+      };
+    });
   }
 
   async countBySubject(subjectId: string): Promise<number> {

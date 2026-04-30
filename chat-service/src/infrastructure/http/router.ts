@@ -36,6 +36,9 @@ export function createRouter(
   router.post('/conversations/:id/messages', messageController.postMessage);
 
   // ── Wall posts ───────────────────────────────────────────────────────────────
+  // GET  /api/walls (Wall Inbox)
+  router.get('/walls', wallPostController.getWallInbox);
+
   // GET  /api/groups/:groupId/wall
   router.get('/groups/:groupId/wall', wallPostController.getPosts);
 

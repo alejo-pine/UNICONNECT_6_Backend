@@ -1,4 +1,4 @@
-import { StudyGroup, StudyGroupDetailResponse, StudyGroupWithSubject, PendingAdminTransfer } from '../entities/studyGroup';
+import { StudyGroup, StudyGroupDetailResponse, StudyGroupWithSubject, PendingAdminTransfer, GroupMember } from '../entities/studyGroup';
 
 export interface StudyGroupRepositoryPort {
   create(input: {
@@ -16,6 +16,7 @@ export interface StudyGroupRepositoryPort {
   isMember(profileId: string, groupId: string): Promise<boolean>;
   addMember(profileId: string, groupId: string): Promise<void>;
   removeMember(profileId: string, groupId: string): Promise<void>;
+  findMembers(groupId: string): Promise<GroupMember[]>;
   userExists(profileId: string): Promise<boolean>;
   hasPendingRequest(profileId: string, groupId: string): Promise<boolean>;
   addPendingRequest(profileId: string, groupId: string): Promise<void>;

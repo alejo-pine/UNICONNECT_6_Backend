@@ -186,6 +186,36 @@ export const leaveStudyGroup = async (req: AuthenticatedRequest, res: Response):
   }
 };
 
+export const getGroupMembers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required and must be a non-empty string');
+    }
+
+    const result = await studyGroupDependencies.getStudyGroupMembersUseCase.execute(groupId, req.user.id);
+
+    sendServiceResult(
+      res,
+      {
+        ...result,
+        data: result.data || null,
+      },
+      200
+    );
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.getGroupMembers', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
+
 export const acceptStudyGroupRequest = async (
   req: AuthenticatedRequest,
   res: Response
