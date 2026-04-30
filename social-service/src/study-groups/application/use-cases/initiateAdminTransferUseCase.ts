@@ -4,6 +4,8 @@ import { StudyGroupDetailResponse } from '../../domain/entities/studyGroup';
 import { StudyGroupRepositoryPort } from '../../domain/ports/studyGroupRepositoryPort';
 import { ServiceResult } from '../dto/studyGroupDto';
 import { studyGroupRealtimeBus, STUDY_GROUP_ADMIN_TRANSFER_REQUESTED_EVENT } from '../../../realtime/studyGroupRealtime';
+import { studyGroupSubject } from '../../domain/events/studyGroupSubject';
+import { StudyGroupEventType } from '../../domain/events/studyGroupEvents';
 
 export interface InitiateAdminTransferCommand {
   groupId: string;
@@ -78,6 +80,15 @@ export class InitiateAdminTransferUseCase {
         fromUserId: command.currentUserId,
         toUserId: command.newAdminUserId,
         status: 'pending',
+      });
+
+      // Disparar Evento de Dominio (Subject -> Observers)
+      await studyGroupSubject.notify({
+        type: StudyGroupEventType.TRANSFERENCIA_ADMIN,
+        groupId: command.groupId,
+        actorUserId: command.currentUserId,
+        targetUserId: command.newAdminUserId,
+        metadata: { status: 'pending' }
       });
 
       const updatedGroup = await this.studyGroupRepository.findDetailById(command.groupId);
