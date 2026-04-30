@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.get('/', async (req, res) => {
+router.get('/', async (req: any, res: any) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.patch('/:id/read', async (req, res) => {
+router.patch('/:id/read', async (req: any, res: any) => {
   try {
     const userId = req.user?.id;
     if (!userId) {

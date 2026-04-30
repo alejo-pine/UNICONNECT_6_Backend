@@ -40,6 +40,7 @@ const makeRepository = (
   findById: async () => groupWithSubject,
   findDetailById: async () => groupDetail,
   isMember: async () => false,
+  findMembers: async () => [],
   addMember: async () => undefined,
   removeMember: async () => undefined,
   userExists: async () => true,

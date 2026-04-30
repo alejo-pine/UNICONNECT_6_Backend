@@ -19,7 +19,8 @@ export function createExpressApp(
   const app = express();
 
   // ── Global middlewares ───────────────────────────────────────────────────────
-  const corsOrigin = process.env['CORS_ORIGIN'] ?? '*';
+  const corsOriginEnv = process.env['CORS_ORIGIN'] ?? '*';
+  const corsOrigin = corsOriginEnv.includes(',') ? corsOriginEnv.split(',') : corsOriginEnv;
   app.use(
     cors({
       origin: corsOrigin,

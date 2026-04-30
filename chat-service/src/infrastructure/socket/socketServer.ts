@@ -43,7 +43,8 @@ export function initSocketServer(
     return ioInstance;
   }
 
-  const corsOrigin = process.env['CORS_ORIGIN'] ?? '*';
+  const corsOriginEnv = process.env['CORS_ORIGIN'] ?? '*';
+  const corsOrigin = corsOriginEnv.includes(',') ? corsOriginEnv.split(',') : corsOriginEnv;
 
   ioInstance = new SocketIOServer<
     ClientToServerEvents,
