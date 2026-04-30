@@ -223,6 +223,24 @@ router.all('/api/study-groups/*', async (req: Request, res: Response) => {
   await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
 });
 
+router.all('/notifications', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE);
+});
+
+router.all('/notifications/*', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE);
+});
+
+router.all('/api/notifications', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
+});
+
+router.all('/api/notifications/*', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
+});
+
 router.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',

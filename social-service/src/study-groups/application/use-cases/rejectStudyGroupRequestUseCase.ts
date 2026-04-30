@@ -4,6 +4,8 @@ import { studyGroupRealtimeBus } from '../../../realtime/studyGroupRealtime';
 import { StudyGroupDetailResponse } from '../../domain/entities/studyGroup';
 import { StudyGroupRepositoryPort } from '../../domain/ports/studyGroupRepositoryPort';
 import { ServiceResult } from '../dto/studyGroupDto';
+import { studyGroupSubject } from '../../domain/events/studyGroupSubject';
+import { StudyGroupEventType } from '../../domain/events/studyGroupEvents';
 
 export interface RejectStudyGroupRequestCommand {
   groupId: string;
@@ -69,6 +71,15 @@ export class RejectStudyGroupRequestUseCase {
         actorUserId: command.currentUserId,
         updatedGroup,
         timestamp: new Date().toISOString(),
+      });
+
+      // Disparar Evento de Dominio (Subject -> Observers)
+      await studyGroupSubject.notify({
+        type: StudyGroupEventType.MIEMBRO_RECHAZADO,
+        groupId: command.groupId,
+        actorUserId: command.currentUserId,
+        targetUserId: command.requestedUserId,
+        metadata: { updatedGroup }
       });
 
       return {

@@ -15,6 +15,10 @@ import {
   StudyGroupUpdatedSocketPayload,
   AdminTransferEventPayload,
 } from '../../realtime/studyGroupRealtime';
+import { studyGroupSubject } from '../../study-groups/domain/events/studyGroupSubject';
+import { WebSocketNotificationObserver } from '../../study-groups/infrastructure/observers/WebSocketNotificationObserver';
+import { PersistenciaNotificacionObserver } from '../../study-groups/infrastructure/observers/PersistenciaNotificacionObserver';
+
 
 type StudyGroupSocket = Socket;
 
@@ -192,8 +196,15 @@ export const initStudyGroupSocketServer = (
       emitAdminTransferEvent(STUDY_GROUP_ADMIN_TRANSFER_REJECTED_EVENT, payload);
     });
     
+    // Register domain observers
+    const wsObserver = new WebSocketNotificationObserver(ioInstance);
+    const dbObserver = new PersistenciaNotificacionObserver();
+    studyGroupSubject.subscribe(wsObserver);
+    studyGroupSubject.subscribe(dbObserver);
+
     isObserverRegistered = true;
   }
+
 
   eventLogger.info('StudyGroupSocketServer', 'Study group Socket.IO server initialized');
   return ioInstance;
