@@ -20,3 +20,8 @@ export interface StudyGroupResponse extends StudyGroupWithSubject {
   isAdmin: boolean;
   isMember: boolean;
 }
+
+export interface GroupMember {
+  id: string;
+  name: string;
+}

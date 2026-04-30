@@ -9,6 +9,7 @@ import {
   getMyStudyGroups,
   joinStudyGroup,
   leaveStudyGroup,
+  getGroupMembers,
 } from './studyGroupController';
 
 const router: Router = Router();
@@ -43,6 +44,12 @@ router.post(
   '/:groupId/leave',
   authMiddleware,
   asyncHandler((req, res) => leaveStudyGroup(req as AuthenticatedRequest, res))
+);
+
+router.get(
+  '/:groupId/members',
+  authMiddleware,
+  asyncHandler((req, res) => getGroupMembers(req as AuthenticatedRequest, res))
 );
 
 export default router;

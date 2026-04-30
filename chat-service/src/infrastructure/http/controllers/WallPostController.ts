@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Server as SocketIOServer } from 'socket.io';
 import { ListWallPostsUseCase } from '../../../application/use-cases/ListWallPostsUseCase';
 import { CreateWallPostUseCase } from '../../../application/use-cases/CreateWallPostUseCase';
+import { ListWallInboxUseCase } from '../../../application/use-cases/ListWallInboxUseCase';
 import { ValidationError } from '../../../shared/errors/ValidationError';
 import { CreateWallAttachmentInput } from '../../../domain/entities/WallPost';
 import {
@@ -23,6 +24,7 @@ export class WallPostController {
   constructor(
     private readonly listWallPosts: ListWallPostsUseCase,
     private readonly createWallPost: CreateWallPostUseCase,
+    private readonly listWallInbox: ListWallInboxUseCase,
     private readonly io: SocketIOServer<
       ClientToServerEvents,
       ServerToClientEvents,
@@ -30,6 +32,15 @@ export class WallPostController {
       SocketData
     >
   ) {}
+
+  getWallInbox = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const inbox = await this.listWallInbox.execute(req.userId);
+      res.status(200).json(inbox);
+    } catch (error) {
+      next(error);
+    }
+  };
 
   getPosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -86,6 +97,8 @@ export class WallPostController {
         id: post.id,
         groupId: post.groupId,
         senderId: post.senderId,
+        senderName: post.senderName,
+        avatarUrl: post.avatarUrl,
         content: post.content,
         attachments: post.attachments.map((a) => ({
           id: a.id,

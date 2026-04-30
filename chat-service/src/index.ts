@@ -22,6 +22,7 @@ import { ListMessagesUseCase } from './application/use-cases/ListMessagesUseCase
 import { SendMessageUseCase } from './application/use-cases/SendMessageUseCase';
 import { ListWallPostsUseCase } from './application/use-cases/ListWallPostsUseCase';
 import { CreateWallPostUseCase } from './application/use-cases/CreateWallPostUseCase';
+import { ListWallInboxUseCase } from './application/use-cases/ListWallInboxUseCase';
 import { GetDmAttachmentUrlUseCase } from './application/use-cases/GetDmAttachmentUrlUseCase';
 import { GetWallAttachmentUrlUseCase } from './application/use-cases/GetWallAttachmentUrlUseCase';
 
@@ -56,6 +57,7 @@ function bootstrap(): void {
   const sendMessage = new SendMessageUseCase(conversationRepo, messageRepo);
   const listWallPosts = new ListWallPostsUseCase(wallPostRepo, groupRepo);
   const createWallPost = new CreateWallPostUseCase(wallPostRepo, groupRepo);
+  const listWallInbox = new ListWallInboxUseCase(groupRepo);
   const getDmAttachmentUrl = new GetDmAttachmentUrlUseCase(messageRepo, conversationRepo, storageRepo);
   const getWallAttachmentUrl = new GetWallAttachmentUrlUseCase(wallPostRepo, groupRepo, storageRepo);
 
@@ -80,7 +82,7 @@ function bootstrap(): void {
     io
   );
 
-  const wallPostController = new WallPostController(listWallPosts, createWallPost, io);
+  const wallPostController = new WallPostController(listWallPosts, createWallPost, listWallInbox, io);
 
   const attachmentController = new AttachmentController(getDmAttachmentUrl, getWallAttachmentUrl);
 

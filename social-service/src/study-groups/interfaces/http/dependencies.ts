@@ -4,6 +4,7 @@ import { GetAllStudyGroupsUseCase } from '../../application/use-cases/getAllStud
 import { GetMyStudyGroupsUseCase } from '../../application/use-cases/getMyStudyGroupsUseCase';
 import { JoinStudyGroupUseCase } from '../../application/use-cases/joinStudyGroupUseCase';
 import { LeaveStudyGroupUseCase } from '../../application/use-cases/leaveStudyGroupUseCase';
+import { GetStudyGroupMembersUseCase } from '../../application/use-cases/getStudyGroupMembers';
 import { SupabaseStudyGroupRepository } from '../../infrastructure/supabaseStudyGroupRepository';
 import { SupabaseSubjectRepository } from '../../infrastructure/supabaseSubjectRepository';
 
@@ -19,4 +20,5 @@ export const studyGroupDependencies = {
   ),
   joinStudyGroupUseCase: new JoinStudyGroupUseCase(studyGroupRepository),
   leaveStudyGroupUseCase: new LeaveStudyGroupUseCase(studyGroupRepository),
+  getStudyGroupMembersUseCase: new GetStudyGroupMembersUseCase(studyGroupRepository),
 };

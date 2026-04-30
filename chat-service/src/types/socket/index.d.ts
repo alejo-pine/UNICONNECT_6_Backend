@@ -19,6 +19,8 @@ export interface WallNewPostPayload {
   id: string;
   groupId: string;
   senderId: string;
+  senderName: string;
+  avatarUrl: string | null;
   content: string | null;
   attachments: Array<{
     id: string;
