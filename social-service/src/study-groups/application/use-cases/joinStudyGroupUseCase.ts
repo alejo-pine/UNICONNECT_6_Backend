@@ -4,6 +4,8 @@ import { studyGroupRealtimeBus } from '../../../realtime/studyGroupRealtime';
 import { StudyGroupResponse } from '../../domain/entities/studyGroup';
 import { StudyGroupRepositoryPort } from '../../domain/ports/studyGroupRepositoryPort';
 import { ServiceResult } from '../dto/studyGroupDto';
+import { studyGroupSubject } from '../../domain/events/studyGroupSubject';
+import { StudyGroupEventType } from '../../domain/events/studyGroupEvents';
 
 export interface JoinStudyGroupCommand {
   groupId: string;
@@ -69,6 +71,15 @@ export class JoinStudyGroupUseCase {
           actorUserId: command.profileId,
           updatedGroup,
           timestamp: new Date().toISOString(),
+        });
+
+        // Disparar Evento de Dominio (Subject -> Observers)
+        await studyGroupSubject.notify({
+          type: StudyGroupEventType.SOLICITUD_INGRESO,
+          groupId: command.groupId,
+          actorUserId: command.profileId,
+          targetUserId: group.creatorId, // Se notifica al administrador del grupo
+          metadata: { updatedGroup }
         });
       }
 

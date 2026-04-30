@@ -86,3 +86,14 @@ Uses Supabase with the following tables:
 - `event` - Events
 - `profile_subject` - User enrollments
 - `subject` - Subjects/Courses
+- `notifications` - Persisted user notifications
+
+---
+
+## Patrones de Diseño
+
+Consulta la documentación específica de cada patrón implementado en el microservicio:
+
+- [📘 Patrón Observer — Eventos de Dominio de Grupos de Estudio](./docs/OBSERVER_PATTERN.md)
+
+
