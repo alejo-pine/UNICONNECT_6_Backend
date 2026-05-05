@@ -52,4 +52,32 @@ describe('StudyGroupSubject (Patrón Observer)', () => {
       expect(observer2.update).toHaveBeenCalledWith(mockEvent);
     });
   });
+  describe('Ciclo de desuscripción (Criterio 2)', () => {
+    it('Un observer desuscrito no debe recibir eventos posteriores', async () => {
+      // Arrange
+      subject.subscribe(observer1);
+      subject.subscribe(observer2);
+
+      // Act 1: Se desuscribe el observer 2
+      subject.unsubscribe(observer2);
+
+      const mockEvent: StudyGroupEvent = {
+        type: StudyGroupEventType.TRANSFERENCIA_ADMIN,
+        groupId: 'group-123',
+        actorUserId: 'admin-456',
+        targetUserId: 'user-789',
+      };
+
+      // Act 2: Disparamos el evento
+      await subject.notify(mockEvent);
+
+      // Assert
+      // El observer activo recibe el evento
+      expect(observer1.update).toHaveBeenCalledTimes(1);
+      expect(observer1.update).toHaveBeenCalledWith(mockEvent);
+
+      // El observer desuscrito NO recibe el evento
+      expect(observer2.update).not.toHaveBeenCalled();
+    });
+  });
 });
