@@ -75,6 +75,7 @@ const configureApp = (): typeof app => {
   app.get('/health', (_req: Request, res: Response): void => {
     res.status(200).json({
       status: 'ok',
+      version: '1.0.0',
       service: 'auth-service',
       timestamp: new Date().toISOString(),
     });

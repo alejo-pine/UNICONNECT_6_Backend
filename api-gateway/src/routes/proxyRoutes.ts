@@ -34,6 +34,10 @@ const proxyRequest = async (
     // Eliminar headers de caché que causan 304
     delete headers['if-none-match'];
     delete headers['if-modified-since'];
+    // Forzar respuesta sin compresión desde los microservicios
+    // para evitar que axios reciba bytes gzip y los reenvíe corruptos
+    delete headers['accept-encoding'];
+    headers['accept-encoding'] = 'identity';
 
     const config = {
       method: req.method as any,
@@ -41,6 +45,8 @@ const proxyRequest = async (
       headers,
       data: req.body,
       validateStatus: () => true,
+      // Desactivar descompresión automática de axios para control total
+      decompress: true,
     };
 
     console.log(`[ProxyRequest] Enviando petición a microservicio...`);
@@ -244,6 +250,7 @@ router.all('/api/notifications/*', async (req: Request, res: Response) => {
 router.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
+    version: '1.0.0',
     service: 'api-gateway',
     timestamp: new Date().toISOString(),
   });

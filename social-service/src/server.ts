@@ -24,7 +24,7 @@ app.use('/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ status: 'ok', version: '1.0.0' });
 });
 
 // ============================================================================
