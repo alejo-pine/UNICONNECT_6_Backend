@@ -1,4 +1,4 @@
-import { ServiceResult } from '../../../shared/core/serviceResult';
+import { ServiceResult } from '../../../shared/application/serviceResult';
 import { GroupMember } from '../../domain/entities/studyGroup';
 import { StudyGroupRepositoryPort } from '../../domain/ports/studyGroupRepositoryPort';
 
@@ -10,7 +10,7 @@ export class GetStudyGroupMembersUseCase {
 
     if (!isMember) {
       return {
-        success: false,
+        data: null,
         error: 'You are not a member of this study group',
         statusCode: 403,
       };
@@ -20,10 +20,9 @@ export class GetStudyGroupMembersUseCase {
     const filteredMembers = members.filter(m => m.id !== requesterId);
 
     return {
-      success: true,
       data: filteredMembers,
       error: null,
       statusCode: 200,
-    } as ServiceResult<GroupMember[]>;
+    };
   }
 }
