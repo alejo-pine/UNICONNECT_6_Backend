@@ -1,0 +1,19 @@
+# ──────────────────────────────────────────────
+# auth-service — Dockerfile.dev (desarrollo con hot-reload)
+# ──────────────────────────────────────────────
+# Este servicio tiene "type":"module" en package.json.
+# En producción esto causa conflicto con la salida CJS de tsc.
+# En desarrollo NO hay problema: tsx ejecuta el código TypeScript fuente
+# directamente con soporte nativo para ESM, sin compilar a .js.
+# ──────────────────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+EXPOSE ${PORT:-3001}
+
+# tsx watch src/server.ts — maneja ESM + imports sin extensión nativamente
+CMD ["npm", "run", "dev"]
