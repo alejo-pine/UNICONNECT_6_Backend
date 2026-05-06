@@ -1,0 +1,17 @@
+# ──────────────────────────────────────────────
+# social-service — Dockerfile.dev (desarrollo con hot-reload)
+# ──────────────────────────────────────────────
+# Este servicio tiene "type":"module" en package.json.
+# tsx maneja ESM + imports TypeScript sin extensión nativamente,
+# evitando el conflicto ESM/CJS que ocurre en el build de producción.
+# ──────────────────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+EXPOSE ${PORT:-3003}
+
+CMD ["npm", "run", "dev"]

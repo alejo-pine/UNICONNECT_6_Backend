@@ -1,0 +1,16 @@
+# ──────────────────────────────────────────────
+# chat-service — Dockerfile.dev (desarrollo con hot-reload)
+# ──────────────────────────────────────────────
+# Entry point: src/index.ts (según "main" en package.json)
+# Script dev: tsx watch src/index.ts
+# ──────────────────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+EXPOSE ${PORT:-3004}
+
+CMD ["npm", "run", "dev"]
