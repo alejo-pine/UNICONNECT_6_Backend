@@ -80,4 +80,33 @@ describe('StudyGroupSubject (Patrón Observer)', () => {
       expect(observer2.update).not.toHaveBeenCalled();
     });
   });
+  describe('Aislamiento de errores (Criterio 3)', () => {
+    it('Un observer que lanza una excepción no debe detener la notificación al resto', async () => {
+      // Arrange
+      const errorObserver: jest.Mocked<IObserver> = {
+        update: jest.fn<() => Promise<void>>().mockRejectedValue(new Error('Fallo simulado en observer')),
+      };
+
+      subject.subscribe(errorObserver); // Suscribimos al defectuoso
+      subject.subscribe(observer1);     // Suscribimos al normal
+
+      const mockEvent: StudyGroupEvent = {
+        type: StudyGroupEventType.SOLICITUD_INGRESO,
+        groupId: 'group-123',
+        actorUserId: 'user-000',
+      };
+
+      // Act
+      // Esperamos que notify termine exitosamente sin propagar el error arrojado por errorObserver
+      await expect(subject.notify(mockEvent)).resolves.not.toThrow();
+
+      // Assert
+      // El observer defectuoso intentó procesarlo
+      expect(errorObserver.update).toHaveBeenCalledTimes(1);
+
+      // El observer normal sí recibió el evento gracias al aislamiento
+      expect(observer1.update).toHaveBeenCalledTimes(1);
+      expect(observer1.update).toHaveBeenCalledWith(mockEvent);
+    });
+  });
 });
