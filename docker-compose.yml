@@ -1,0 +1,247 @@
+# ============================================================
+# UniConnect — Docker Compose para desarrollo local
+# ============================================================
+# Uso:
+#   docker compose up --build        Levanta todo desde cero
+#   docker compose up api-gateway    Solo el gateway
+#   docker compose logs -f           Logs en tiempo real
+#
+# Prerrequisitos:
+#   - Cada servicio tiene su propio .env con credenciales de Supabase.
+#   - NO se levanta ningún contenedor de base de datos local;
+#     todos los servicios se conectan a Supabase Cloud.
+#   - Cada microservicio necesita un Dockerfile.dev (ver TAREA 2).
+# ============================================================
+
+services:
+
+  # ──────────────────────────────────────────────
+  # API Gateway  —  puerto host: 3000
+  # ──────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.dev
+    container_name: uc_api_gateway
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./api-gateway/.env
+    environment:
+      # Sobrescribe las URLs de los servicios para que usen los nombres
+      # de servicio de Docker en lugar de localhost.
+      PORT: "3000"
+      AUTH_SERVICE_URL: "http://auth-service:3001"
+      PROFILE_SERVICE_URL: "http://profile-service:3002"
+      SOCIAL_SERVICE_URL: "http://social-service:3003"
+      CHAT_SERVICE_URL: "http://chat-service:3004"
+      # Necesario en Docker Desktop (Windows/Mac): inotify no propaga
+      # eventos de cambio de archivos en bind mounts; polling es el fallback.
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+    volumes:
+      - ./api-gateway/src:/app/src      # hot-reload: bind mount RW (tsx watch)
+      - gateway_nm:/app/node_modules    # volumen nombrado — node_modules del contenedor
+    depends_on:
+      - auth-service
+      - profile-service
+      - social-service
+      - chat-service
+    networks:
+      - uniconnect_net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Auth Service  —  puerto host: 3001
+  # ──────────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile.dev
+    container_name: uc_auth_service
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./auth-service/.env
+    environment:
+      PORT: "3001"
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+    volumes:
+      - ./auth-service/src:/app/src
+      - auth_nm:/app/node_modules
+    networks:
+      - uniconnect_net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Profile Service  —  puerto host: 3002
+  # ──────────────────────────────────────────────
+  profile-service:
+    build:
+      context: ./profile-service
+      dockerfile: Dockerfile.dev
+    container_name: uc_profile_service
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./profile-service/.env
+    environment:
+      PORT: "3002"
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+    volumes:
+      - ./profile-service/src:/app/src
+      - profile_nm:/app/node_modules
+    networks:
+      - uniconnect_net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Social Service  —  puerto host: 3003
+  # ──────────────────────────────────────────────
+  social-service:
+    build:
+      context: ./social-service
+      dockerfile: Dockerfile.dev
+    container_name: uc_social_service
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./social-service/.env
+    environment:
+      PORT: "3003"
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+    volumes:
+      - ./social-service/src:/app/src
+      - social_nm:/app/node_modules
+    networks:
+      - uniconnect_net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Chat Service  —  puerto host: 3004
+  # ──────────────────────────────────────────────
+  chat-service:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile.dev
+    container_name: uc_chat_service
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./chat-service/.env
+    environment:
+      PORT: "3004"
+      # El frontend accede al chat directamente (WebSocket), por eso
+      # también escucha en el host en su puerto original.
+      CORS_ORIGIN: "http://localhost:5173,http://localhost:8081,http://localhost:19006"
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+    volumes:
+      - ./chat-service/src:/app/src
+      - chat_nm:/app/node_modules
+    networks:
+      - uniconnect_net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Dashboard Frontend (React + Vite)
+  # puerto host: 5173  (dev server de Vite)
+  # ──────────────────────────────────────────────
+  dashboard:
+    build:
+      context: ../UNICONNECT_6_Dashboard_Frontend
+      dockerfile: Dockerfile.dev
+    container_name: uc_dashboard
+    ports:
+      - "5173:5173"
+    env_file:
+      - ../UNICONNECT_6_Dashboard_Frontend/.env
+    environment:
+      # En Docker el gateway está en el host desde la perspectiva del
+      # navegador, por eso apuntamos a localhost (no al nombre de servicio).
+      VITE_API_BASE_URL: "http://localhost:3000/api"
+      VITE_BACKEND_PUBLIC_URL: "http://localhost:3000"
+      VITE_CHAT_SERVICE_URL: "http://localhost:3004"
+      VITE_AUTH_SYNC_URL: "http://localhost:3000/auth/sync"
+      VITE_AUTH_SESSION_URL: "http://localhost:3000/auth/session"
+    volumes:
+      - ../UNICONNECT_6_Dashboard_Frontend/src:/app/src          # HMR de Vite
+      - ../UNICONNECT_6_Dashboard_Frontend/public:/app/public    # assets estáticos
+      - dashboard_nm:/app/node_modules
+    depends_on:
+      - api-gateway
+    networks:
+      - uniconnect_net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Mobile Frontend (React Native + Expo)
+  # puerto host: 8081  (Metro bundler)
+  # puerto host: 19000 (Expo DevTools)
+  # ──────────────────────────────────────────────
+  # NOTA: Expo/React Native se ejecuta mejor de forma nativa en el host
+  # (npx expo start) para soporte de simuladores iOS/Android y hot-reload
+  # en dispositivos físicos. El servicio Docker se ofrece como opción
+  # para entornos web (expo start --web) o CI.
+  mobile:
+    build:
+      context: ../UNICONNECT_2_Frontend
+      dockerfile: Dockerfile.dev
+    container_name: uc_mobile
+    ports:
+      - "8081:8081"   # Metro bundler / web preview
+      - "19000:19000" # Expo DevTools
+      - "19001:19001" # Expo tunnel (si se usa)
+    env_file:
+      - ../UNICONNECT_2_Frontend/.env
+    environment:
+      EXPO_PUBLIC_CHAT_SERVICE_URL: "http://localhost:3004"
+      # Para que Metro acepte conexiones desde el exterior del contenedor
+      REACT_NATIVE_PACKAGER_HOSTNAME: "0.0.0.0"
+    volumes:
+      - ../UNICONNECT_2_Frontend/app:/app/app:ro
+      - ../UNICONNECT_2_Frontend/src:/app/src:ro
+      - ../UNICONNECT_2_Frontend/assets:/app/assets:ro
+      - mobile_nm:/app/node_modules
+      - expo_cache:/root/.expo   # caché de Expo entre reinicios
+    depends_on:
+      - api-gateway
+    networks:
+      - uniconnect_net
+    restart: unless-stopped
+
+# ============================================================
+# Volúmenes nombrados
+# ============================================================
+# Uno por servicio para preservar node_modules instalados dentro
+# del contenedor (evita conflictos de binarios nativos entre host
+# Windows/Mac y el contenedor Linux Alpine).
+# expo_cache persiste el caché de Expo entre reinicios del contenedor.
+volumes:
+  gateway_nm:
+    name: uc_gateway_node_modules
+  auth_nm:
+    name: uc_auth_node_modules
+  profile_nm:
+    name: uc_profile_node_modules
+  social_nm:
+    name: uc_social_node_modules
+  chat_nm:
+    name: uc_chat_node_modules
+  dashboard_nm:
+    name: uc_dashboard_node_modules
+  mobile_nm:
+    name: uc_mobile_node_modules
+  expo_cache:
+    name: uc_expo_cache
+
+# ============================================================
+# Red compartida
+# ============================================================
+networks:
+  uniconnect_net:
+    name: uniconnect_dev_network
+    driver: bridge
