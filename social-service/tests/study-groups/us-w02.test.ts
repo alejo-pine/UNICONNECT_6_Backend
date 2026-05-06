@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import { test } from '@jest/globals';
 import { CreateStudyGroupUseCase } from '../../src/study-groups/application/use-cases/createStudyGroupUseCase';
 import { JoinStudyGroupUseCase } from '../../src/study-groups/application/use-cases/joinStudyGroupUseCase';
 import { AcceptStudyGroupRequestUseCase } from '../../src/study-groups/application/use-cases/acceptStudyGroupRequestUseCase';
@@ -214,6 +214,7 @@ test('accept request should move pending request to members', async () => {
 
   const repository = makeRepository({
     isMember: async () => false,
+    hasPendingRequest: async () => true,
     addMember: async (profileId, groupId) => {
       assert.equal(profileId, 'user-pending-1');
       assert.equal(groupId, 'group-1');
