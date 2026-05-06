@@ -20,3 +20,11 @@ primary_region = "dfw"
     type = "connections"
     hard_limit = 100
     soft_limit = 80
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    timeout = "2s"

@@ -2,6 +2,9 @@
 
 Lightweight API Gateway for Uniconnect microservices. Routes requests to auth-service, profile-service, and social-service.
 
+## Public URL
+The production URL for the backend is: **`https://uniconnect-api-gateway.fly.dev`**
+
 ## Quick Start
 
 ```bash
