@@ -5,6 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=\"unit|study-groups\"",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=integration",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
