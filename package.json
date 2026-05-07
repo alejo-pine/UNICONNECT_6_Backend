@@ -1,0 +1,8 @@
+{
+  "name": "uniconnect-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:integration": "npm run test:integration --prefix auth-service && npm run test:integration --prefix social-service"
+  }
+}
