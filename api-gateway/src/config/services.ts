@@ -17,6 +17,9 @@ export const SERVICES = {
   SOCIAL_SERVICE: validateUrl(
     process.env.SOCIAL_SERVICE_URL || 'http://localhost:3003'
   ),
+  NOTIFICATION_SERVICE: validateUrl(
+    process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3005'
+  ),
 };
 
 export const SERVICE_ROUTES = {
@@ -25,4 +28,5 @@ export const SERVICE_ROUTES = {
   '/profile-subjects': SERVICES.PROFILE_SERVICE,
   '/groups': SERVICES.SOCIAL_SERVICE,
   '/events': SERVICES.SOCIAL_SERVICE,
+  '/notifications': SERVICES.NOTIFICATION_SERVICE,
 };
