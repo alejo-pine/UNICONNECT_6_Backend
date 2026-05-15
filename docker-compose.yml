@@ -150,32 +150,32 @@ services:
   # Dashboard Frontend (React + Vite)
   # puerto host: 5173  (dev server de Vite)
   # ──────────────────────────────────────────────
-  dashboard:
-    build:
-      context: ../UNICONNECT_6_Dashboard_Frontend
-      dockerfile: Dockerfile.dev
-    container_name: uc_dashboard
-    ports:
-      - "5173:5173"
-    env_file:
-      - ../UNICONNECT_6_Dashboard_Frontend/.env
-    environment:
-      # En Docker el gateway está en el host desde la perspectiva del
-      # navegador, por eso apuntamos a localhost (no al nombre de servicio).
-      VITE_API_BASE_URL: "http://localhost:3000/api"
-      VITE_BACKEND_PUBLIC_URL: "http://localhost:3000"
-      VITE_CHAT_SERVICE_URL: "http://localhost:3004"
-      VITE_AUTH_SYNC_URL: "http://localhost:3000/auth/sync"
-      VITE_AUTH_SESSION_URL: "http://localhost:3000/auth/session"
-    volumes:
-      - ../UNICONNECT_6_Dashboard_Frontend/src:/app/src          # HMR de Vite
-      - ../UNICONNECT_6_Dashboard_Frontend/public:/app/public    # assets estáticos
-      - dashboard_nm:/app/node_modules
-    depends_on:
-      - api-gateway
-    networks:
-      - uniconnect_net
-    restart: unless-stopped
+#  dashboard:
+#    build:
+#      context: ../UNICONNECT_6_Dashboard_Frontend
+#      dockerfile: Dockerfile.dev
+#    container_name: uc_dashboard
+#    ports:
+#      - "5173:5173"
+#    env_file:
+#      - ../UNICONNECT_6_Dashboard_Frontend/.env
+#    environment:
+#      # En Docker el gateway está en el host desde la perspectiva del
+#      # navegador, por eso apuntamos a localhost (no al nombre de servicio).
+#      VITE_API_BASE_URL: "http://localhost:3000/api"
+#      VITE_BACKEND_PUBLIC_URL: "http://localhost:3000"
+#      VITE_CHAT_SERVICE_URL: "http://localhost:3004"
+#      VITE_AUTH_SYNC_URL: "http://localhost:3000/auth/sync"
+#      VITE_AUTH_SESSION_URL: "http://localhost:3000/auth/session"
+#    volumes:
+#      - ../UNICONNECT_6_Dashboard_Frontend/src:/app/src          # HMR de Vite
+#      - ../UNICONNECT_6_Dashboard_Frontend/public:/app/public    # assets estáticos
+#      - dashboard_nm:/app/node_modules
+#    depends_on:
+#      - api-gateway
+#    networks:
+#      - uniconnect_net
+#    restart: unless-stopped
 
   # ──────────────────────────────────────────────
   # Mobile Frontend (React Native + Expo)
@@ -186,32 +186,32 @@ services:
   # (npx expo start) para soporte de simuladores iOS/Android y hot-reload
   # en dispositivos físicos. El servicio Docker se ofrece como opción
   # para entornos web (expo start --web) o CI.
-  mobile:
-    build:
-      context: ../UNICONNECT_2_Frontend
-      dockerfile: Dockerfile.dev
-    container_name: uc_mobile
-    ports:
-      - "8081:8081"   # Metro bundler / web preview
-      - "19000:19000" # Expo DevTools
-      - "19001:19001" # Expo tunnel (si se usa)
-    env_file:
-      - ../UNICONNECT_2_Frontend/.env
-    environment:
-      EXPO_PUBLIC_CHAT_SERVICE_URL: "http://localhost:3004"
-      # Para que Metro acepte conexiones desde el exterior del contenedor
-      REACT_NATIVE_PACKAGER_HOSTNAME: "0.0.0.0"
-    volumes:
-      - ../UNICONNECT_2_Frontend/app:/app/app:ro
-      - ../UNICONNECT_2_Frontend/src:/app/src:ro
-      - ../UNICONNECT_2_Frontend/assets:/app/assets:ro
-      - mobile_nm:/app/node_modules
-      - expo_cache:/root/.expo   # caché de Expo entre reinicios
-    depends_on:
-      - api-gateway
-    networks:
-      - uniconnect_net
-    restart: unless-stopped
+#  mobile:
+#    build:
+#      context: ../UNICONNECT_2_Frontend
+#      dockerfile: Dockerfile.dev
+#    container_name: uc_mobile
+#    ports:
+#      - "8081:8081"   # Metro bundler / web preview
+#      - "19000:19000" # Expo DevTools
+#      - "19001:19001" # Expo tunnel (si se usa)
+#    env_file:
+#      - ../UNICONNECT_2_Frontend/.env
+#    environment:
+#      EXPO_PUBLIC_CHAT_SERVICE_URL: "http://localhost:3004"
+#      # Para que Metro acepte conexiones desde el exterior del contenedor
+#      REACT_NATIVE_PACKAGER_HOSTNAME: "0.0.0.0"
+#    volumes:
+#      - ../UNICONNECT_2_Frontend/app:/app/app:ro
+#      - ../UNICONNECT_2_Frontend/src:/app/src:ro
+#      - ../UNICONNECT_2_Frontend/assets:/app/assets:ro
+#      - mobile_nm:/app/node_modules
+#      - expo_cache:/root/.expo   # caché de Expo entre reinicios
+#    depends_on:
+#      - api-gateway
+#    networks:
+#      - uniconnect_net
+#    restart: unless-stopped
 
 # ============================================================
 # Volúmenes nombrados
