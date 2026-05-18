@@ -76,6 +76,34 @@ export class CreateStudyGroupUseCase {
         timestamp: new Date().toISOString(),
       });
 
+      // BADGES NOTIFICATION LOGIC
+      try {
+        const userGroupCount = await this.studyGroupRepository.countCreatedGroups(command.creatorId);
+        
+        const notifyBadge = async (title: string, message: string) => {
+          const notificationUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3005/notifications';
+          await fetch(notificationUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: command.creatorId,
+              title,
+              message,
+              type: 'SISTEMA',
+              read: false,
+            }),
+          });
+        };
+
+        if (userGroupCount === 1) {
+          await notifyBadge('🚀 Insignia Desbloqueada: Iniciador', 'Creaste tu primer grupo de estudio.');
+        } else if (userGroupCount === 5) {
+          await notifyBadge('👨‍🏫 Insignia Desbloqueada: Monitor Universitario', 'Has creado 5 grupos de estudio.');
+        }
+      } catch (badgeError) {
+        eventLogger.error('CreateStudyGroupUseCase.badgeCheck', 'Failed to check/notify badges', badgeError);
+      }
+
       return result;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';

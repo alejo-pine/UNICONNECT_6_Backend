@@ -48,7 +48,30 @@ export class SendMessageUseCase {
       attachments: input.attachments,
     };
 
-    return this.messageRepo.create(createInput);
+    const message = await this.messageRepo.create(createInput);
+
+    // BADGE NOTIFICATION LOGIC
+    try {
+      const messagesCount = await this.messageRepo.countSentMessages(input.senderId);
+      if (messagesCount === 10) {
+        const notificationUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3005/notifications';
+        await fetch(notificationUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: input.senderId,
+            title: '💬 Insignia Desbloqueada: Sociable',
+            message: 'Enviasta más de 10 mensajes.',
+            type: 'SISTEMA',
+            read: false,
+          }),
+        });
+      }
+    } catch (badgeError) {
+      console.error('SendMessageUseCase: Failed to check/notify badge', badgeError);
+    }
+
+    return message;
   }
 
   private validateAttachments(attachments: CreateAttachmentInput[]): void {

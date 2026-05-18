@@ -2,6 +2,7 @@ import { env } from '../../config/env';
 import { supabase } from '../../config/supabaseClient';
 import { Profile, UploadAvatarInput } from '../domain/entities/profile';
 import { ProfileRepositoryPort, PublicProfileRecord } from '../domain/ports/profileRepositoryPort';
+import { ProfileStatistics, ProfileBadge } from '../domain/entities/profileDecorator';
 
 const TABLE = 'profile';
 let avatarsBucketChecked = false;
@@ -162,5 +163,79 @@ export class SupabaseProfileRepository implements ProfileRepositoryPort {
     }
 
     return data as Profile;
+  }
+
+  async getProfileStatistics(profileId: string): Promise<ProfileStatistics> {
+    const { count: createdGroupsCount } = await supabase
+      .from('study_group')
+      .select('id', { count: 'exact', head: true })
+      .eq('creator_id', profileId);
+
+    const { count: joinedGroupsCount } = await supabase
+      .from('group_member')
+      .select('group_id', { count: 'exact', head: true })
+      .eq('profile_id', profileId);
+
+    const { count: messagesSentCount } = await supabase
+      .from('direct_message')
+      .select('id', { count: 'exact', head: true })
+      .eq('sender_id', profileId);
+
+    return {
+      createdGroupsCount: createdGroupsCount ?? 0,
+      joinedGroupsCount: joinedGroupsCount ?? 0,
+      messagesSentCount: messagesSentCount ?? 0,
+    };
+  }
+
+  async getProfileBadges(profileId: string): Promise<ProfileBadge[]> {
+    // In a real system, these would be fetched from a 'profile_badge' table.
+    // For this requirement, we'll return some mock badges based on system milestones.
+    // E.g., if we could check stats we could unlock badges dynamically, or just return static for now.
+    // Let's get the stats to simulate unlocked badges.
+    const stats = await this.getProfileStatistics(profileId);
+    const badges: ProfileBadge[] = [];
+
+    if (stats.createdGroupsCount > 0) {
+      badges.push({
+        id: 'badge-creator-1',
+        name: 'Iniciador',
+        description: 'Creó su primer grupo de estudio',
+        icon: '🚀',
+        unlockedAt: new Date().toISOString()
+      });
+    }
+
+    if (stats.createdGroupsCount >= 5) {
+      badges.push({
+        id: 'badge-creator-5',
+        name: 'Monitor Universitario',
+        description: 'Ha creado 5 grupos de estudio',
+        icon: '👨‍🏫',
+        unlockedAt: new Date().toISOString()
+      });
+    }
+
+    if (stats.joinedGroupsCount >= 1) {
+      badges.push({
+        id: 'badge-explorer-1',
+        name: 'Explorador Académico',
+        description: 'Se unió a su primer grupo de estudio',
+        icon: '🔍',
+        unlockedAt: new Date().toISOString()
+      });
+    }
+
+    if (stats.messagesSentCount >= 10) {
+      badges.push({
+        id: 'badge-chat-1',
+        name: 'Sociable',
+        description: 'Envió más de 10 mensajes',
+        icon: '💬',
+        unlockedAt: new Date().toISOString()
+      });
+    }
+
+    return badges;
   }
 }

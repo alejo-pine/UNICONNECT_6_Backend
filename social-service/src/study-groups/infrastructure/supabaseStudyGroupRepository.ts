@@ -557,18 +557,16 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
       throw new Error('No pending admin transfer found');
     }
 
-    // Update creator_id and clear pending transfer
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from(STUDY_GROUPS_TABLE)
-      .update({
-        creator_id: transfer.toUserId,
-        pending_admin_transfer: null,
-      })
+      .update({ creator_id: transfer.toUserId })
       .eq('id', groupId);
 
-    if (error) {
-      throw new Error(`Failed to accept admin transfer: ${error.message}`);
+    if (updateError) {
+      throw new Error(`Failed to update group admin: ${updateError.message}`);
     }
+
+    await this.clearPendingAdminTransfer(groupId);
   }
 
   async removeMember(profileId: string, groupId: string): Promise<void> {
@@ -620,6 +618,32 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
 
     if (error) {
       throw new Error(`Failed to count groups by subject: ${error.message}`);
+    }
+
+    return count ?? 0;
+  }
+
+  async countCreatedGroups(profileId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from(STUDY_GROUPS_TABLE)
+      .select('id', { count: 'exact', head: true })
+      .eq('creator_id', profileId);
+
+    if (error) {
+      throw new Error(`Failed to count created groups: ${error.message}`);
+    }
+
+    return count ?? 0;
+  }
+
+  async countJoinedGroups(profileId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from(GROUP_MEMBERS_TABLE)
+      .select('group_id', { count: 'exact', head: true })
+      .eq('profile_id', profileId);
+
+    if (error) {
+      throw new Error(`Failed to count joined groups: ${error.message}`);
     }
 
     return count ?? 0;
