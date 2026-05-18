@@ -7,8 +7,9 @@ let io: SocketIOServer | null = null;
 
 export const initSocketIO = (httpServer: HttpServer, corsOrigins: string[]): SocketIOServer => {
   io = new SocketIOServer(httpServer, {
+    path: '/notifications-socket/',
     cors: {
-      origin: corsOrigins,
+      origin: true,
       methods: ['GET', 'POST'],
       credentials: true,
     },
@@ -16,10 +17,21 @@ export const initSocketIO = (httpServer: HttpServer, corsOrigins: string[]): Soc
   });
 
   io.on('connection', (socket) => {
-    const userId = socket.handshake.query.userId as string | undefined;
+    const { query, auth, headers } = socket.handshake;
 
-    if (!userId) {
-      eventLogger.warn('SocketIO', 'Conexión rechazada: userId no proporcionado');
+    // Accept userId from multiple sources for compatibility with proxied connections
+    const userId = (
+      (query.userId as string) ||
+      (auth?.userId as string) ||
+      (auth?.['x-user-id'] as string) ||
+      (headers['x-user-id'] as string)
+    );
+
+    if (!userId || userId.trim().length === 0) {
+      eventLogger.warn('SocketIO', 'Conexión rechazada: userId no proporcionado', {
+        query,
+        authKeys: auth ? Object.keys(auth) : [],
+      });
       socket.disconnect(true);
       return;
     }
@@ -48,6 +60,7 @@ export const emitNotification = (notification: Notification): void => {
     title: notification.title,
     message: notification.message,
     type: notification.type,
+    groupId: notification.groupId,
     read: notification.read,
     createdAt: notification.createdAt.toISOString(),
   });

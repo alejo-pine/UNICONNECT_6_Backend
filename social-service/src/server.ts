@@ -6,7 +6,6 @@ import { initializeJWKS } from './utils/jwksClient';
 import { studyGroupRepository } from './study-groups/interfaces/http/dependencies';
 import studyGroupsRouter from './study-groups/interfaces/http/studyGroupRoutes';
 import eventsRouter from './events/interfaces/http/eventRoutes';
-import notificationRoutes from './notifications/interfaces/http/notificationRoutes';
 import app from './app';
 import { initStudyGroupSocketServer } from './infrastructure/socket/studyGroupSocketServer';
 
@@ -20,7 +19,6 @@ app.use(express.json());
 // ============================================================================
 app.use('/study-groups', studyGroupsRouter);
 app.use('/events', eventsRouter);
-app.use('/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
