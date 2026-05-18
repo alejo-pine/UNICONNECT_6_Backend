@@ -43,7 +43,7 @@ const configureApp = (): void => {
   app.use(helmet());
 
   const corsOptions: CorsOptions = {
-    origin: env.corsAllowedOrigins,
+    origin: env.nodeEnv === 'development' ? true : env.corsAllowedOrigins,
     credentials: true,
     optionsSuccessStatus: 200,
   };

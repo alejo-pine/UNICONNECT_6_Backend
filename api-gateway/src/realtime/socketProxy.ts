@@ -30,20 +30,29 @@ const proxy = createProxyServer({
 });
 
 export const socketIoProxyMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  if (!req.url.startsWith('/socket.io')) {
-    next();
+  if (req.url.startsWith('/notifications-socket/')) {
+    proxy.web(req, res, { target: SERVICES.NOTIFICATION_SERVICE });
     return;
   }
 
-  proxy.web(req, res, { target: SERVICES.SOCIAL_SERVICE });
+  if (req.url.startsWith('/socket.io/')) {
+    proxy.web(req, res, { target: SERVICES.SOCIAL_SERVICE });
+    return;
+  }
+
+  next();
 };
 
 export const attachSocketIoUpgradeProxy = (server: HttpServer): void => {
   server.on('upgrade', (req, socket, head) => {
-    if (!req.url?.startsWith('/socket.io')) {
+    if (req.url?.startsWith('/notifications-socket/')) {
+      proxy.ws(req, socket, head, { target: SERVICES.NOTIFICATION_SERVICE });
       return;
     }
 
-    proxy.ws(req, socket, head, { target: SERVICES.SOCIAL_SERVICE });
+    if (req.url?.startsWith('/socket.io/')) {
+      proxy.ws(req, socket, head, { target: SERVICES.SOCIAL_SERVICE });
+      return;
+    }
   });
 };

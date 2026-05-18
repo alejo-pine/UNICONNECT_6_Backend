@@ -10,6 +10,7 @@ const toResponseDto = (n: Notification): NotificationResponseDto => ({
   title: n.title,
   message: n.message,
   type: n.type,
+  groupId: n.groupId,
   read: n.read,
   createdAt: n.createdAt.toISOString(),
 });

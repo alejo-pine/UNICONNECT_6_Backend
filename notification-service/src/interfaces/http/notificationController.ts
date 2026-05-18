@@ -16,9 +16,26 @@ export const createNotification = async (req: Request, res: Response): Promise<v
     title: body.title,
     message: body.message,
     type: body.type,
+    groupId: body.groupId,
   });
 
   sendServiceResult(res, result, 201);
+};
+
+export const getMyNotifications = async (req: Request, res: Response): Promise<void> => {
+  // Read userId from header injected by API Gateway or from query param
+  const userId =
+    (req.headers['x-user-id'] as string) ||
+    (req.query['userId'] as string) ||
+    '';
+
+  if (!userId || userId.trim().length === 0) {
+    throw new HttpError(401, 'No autenticado: userId no encontrado');
+  }
+
+  const result = await notificationDependencies.getUserNotificationsUseCase.execute(userId.trim());
+
+  sendServiceResult(res, result);
 };
 
 export const getUserNotifications = async (req: Request, res: Response): Promise<void> => {

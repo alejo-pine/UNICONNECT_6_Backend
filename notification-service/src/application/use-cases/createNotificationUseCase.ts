@@ -10,12 +10,13 @@ const toResponseDto = (n: Notification): NotificationResponseDto => ({
   title: n.title,
   message: n.message,
   type: n.type,
+  groupId: n.groupId,
   read: n.read,
   createdAt: n.createdAt.toISOString(),
 });
 
 const isValidNotificationType = (type: string): type is NotificationType =>
-  ['SOLICITUD_INGRESO', 'MIEMBRO_ACEPTADO', 'MIEMBRO_RECHAZADO', 'NUEVO_MENSAJE', 'EVENTO_GRUPO', 'SISTEMA'].includes(type);
+  ['SOLICITUD_INGRESO', 'MIEMBRO_ACEPTADO', 'MIEMBRO_RECHAZADO', 'NUEVO_MENSAJE', 'EVENTO_GRUPO', 'SISTEMA', 'TRANSFERENCIA_ADMIN'].includes(type);
 
 export class CreateNotificationUseCase {
   constructor(
@@ -43,6 +44,7 @@ export class CreateNotificationUseCase {
         title: dto.title.trim(),
         message: dto.message.trim(),
         type: dto.type,
+        groupId: dto.groupId,
       };
 
       const notification = await this.notificationRepository.create(input);

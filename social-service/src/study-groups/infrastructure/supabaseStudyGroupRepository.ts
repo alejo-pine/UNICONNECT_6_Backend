@@ -235,10 +235,13 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
       subject: Array<SubjectSummary>;
     }>;
 
-    return rows.map((group) => ({
-      ...mapStudyGroup(group),
-      subject: Array.isArray(group.subject) && group.subject.length > 0 ? group.subject[0] : undefined,
-    }));
+    return rows.map((group) => {
+      const subj = group.subject as any;
+      return {
+        ...mapStudyGroup(group),
+        subject: Array.isArray(subj) ? subj[0] : (subj || undefined),
+      };
+    });
   }
 
   async findAvailableBySubject(
@@ -278,10 +281,13 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
       subject: Array<SubjectSummary>;
     }>;
 
-    return rows.map((group) => ({
-      ...mapStudyGroup(group),
-      subject: Array.isArray(group.subject) && group.subject.length > 0 ? group.subject[0] : undefined,
-    }));
+    return rows.map((group) => {
+      const subj = group.subject as any;
+      return {
+        ...mapStudyGroup(group),
+        subject: Array.isArray(subj) ? subj[0] : (subj || undefined),
+      };
+    });
   }
 
   async findById(groupId: string): Promise<StudyGroupWithSubject | null> {
@@ -322,9 +328,10 @@ export class SupabaseStudyGroupRepository implements StudyGroupRepositoryPort {
       subject: Array<SubjectSummary>;
     };
 
+    const subj = group.subject as any;
     return {
       ...mapStudyGroup(group),
-      subject: Array.isArray(group.subject) && group.subject.length > 0 ? group.subject[0] : undefined,
+      subject: Array.isArray(subj) ? subj[0] : (subj || undefined),
     };
   }
 

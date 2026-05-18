@@ -3,6 +3,7 @@ export interface CreateNotificationDto {
   title: string;
   message: string;
   type: string;
+  groupId?: string;
 }
 
 export interface NotificationResponseDto {
@@ -11,6 +12,7 @@ export interface NotificationResponseDto {
   title: string;
   message: string;
   type: string;
+  groupId?: string;
   read: boolean;
   createdAt: string;
 }

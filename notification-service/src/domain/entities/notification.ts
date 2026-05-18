@@ -4,7 +4,8 @@ export type NotificationType =
   | 'MIEMBRO_RECHAZADO'
   | 'NUEVO_MENSAJE'
   | 'EVENTO_GRUPO'
-  | 'SISTEMA';
+  | 'SISTEMA'
+  | 'TRANSFERENCIA_ADMIN';
 
 export interface Notification {
   id: string;
@@ -12,6 +13,7 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
+  groupId?: string;
   read: boolean;
   createdAt: Date;
 }
@@ -21,4 +23,5 @@ export interface CreateNotificationInput {
   title: string;
   message: string;
   type: NotificationType;
+  groupId?: string;
 }
