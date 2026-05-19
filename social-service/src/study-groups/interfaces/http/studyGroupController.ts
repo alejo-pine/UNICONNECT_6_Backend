@@ -369,3 +369,97 @@ export const respondAdminTransfer = async (
     });
   }
 };
+
+export const createStudySession = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required');
+    }
+
+    const payload = req.body;
+    const result = await studyGroupDependencies.createStudySessionUseCase.execute({
+      groupId,
+      creatorId: req.user.id,
+      name: payload.name,
+      description: payload.description,
+      location: payload.location,
+      startTime: payload.startTime,
+      endTime: payload.endTime,
+      recurrenceType: payload.recurrenceType || 'none',
+      recurrenceEndDate: payload.recurrenceEndDate,
+    });
+
+    sendServiceResult(res, { data: result, error: null, statusCode: 201 });
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.createStudySession', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
+
+export const updateStudySession = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const sessionId = typeof req.params.sessionId === 'string' ? req.params.sessionId.trim() : '';
+    if (!sessionId) {
+      throw new HttpError(400, 'Field "sessionId" is required');
+    }
+
+    const payload = req.body;
+
+    // Frontend sends: { name, description, updateMode, fromDate }
+    // updateMode from frontend can be 'this' | 'future' — map to backend 'single' | 'future'
+    const rawMode: string = payload.updateMode || 'single';
+    const updateMode: 'single' | 'future' = rawMode === 'future' ? 'future' : 'single';
+
+    const result = await studyGroupDependencies.updateStudySessionUseCase.execute({
+      sessionId,
+      updaterId: req.user.id,
+      updateMode,
+      updates: {
+        name: payload.name ?? payload.updates?.name,
+        description: payload.description ?? payload.updates?.description,
+        location: payload.location ?? payload.updates?.location,
+        startTime: payload.startTime ?? payload.updates?.startTime,
+        endTime: payload.endTime ?? payload.updates?.endTime,
+      },
+    });
+
+    sendServiceResult(res, { data: result, error: null, statusCode: 200 });
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.updateStudySession', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      sessionId: req.params?.sessionId,
+    });
+  }
+};
+
+export const getStudySessions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required');
+    }
+
+    const result = await studyGroupDependencies.getStudySessionsUseCase.execute(groupId);
+    sendServiceResult(res, { data: result, error: null, statusCode: 200 });
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.getStudySessions', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
