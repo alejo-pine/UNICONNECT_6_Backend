@@ -5,6 +5,8 @@ import { asyncHandler } from '../../../utils/controller';
 import {
   acceptStudyGroupRequest,
   createStudyGroup,
+  createStudySession,
+  updateStudySession,
   getAllStudyGroups,
   getAvailableStudyGroupsBySubject,
   getMyStudyGroups,
@@ -15,6 +17,7 @@ import {
   respondAdminTransfer,
   rejectStudyGroupRequest,
   transferStudyGroupAdmin,
+  getStudySessions,
 } from './studyGroupController';
 
 const router: Router = Router();
@@ -85,6 +88,24 @@ router.get(
   '/:groupId/members',
   authMiddleware,
   asyncHandler((req, res) => getGroupMembers(req as AuthenticatedRequest, res))
+);
+
+router.post(
+  '/:groupId/sessions',
+  authMiddleware,
+  asyncHandler((req, res) => createStudySession(req as AuthenticatedRequest, res))
+);
+
+router.get(
+  '/:groupId/sessions',
+  authMiddleware,
+  asyncHandler((req, res) => getStudySessions(req as AuthenticatedRequest, res))
+);
+
+router.put(
+  '/sessions/:sessionId',
+  authMiddleware,
+  asyncHandler((req, res) => updateStudySession(req as AuthenticatedRequest, res))
 );
 
 export default router;
