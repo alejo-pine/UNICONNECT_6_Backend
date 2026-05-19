@@ -99,6 +99,32 @@ export class AcceptStudyGroupRequestUseCase {
       });
 
 
+      // BADGES NOTIFICATION LOGIC
+      try {
+        const userJoinedCount = await this.studyGroupRepository.countJoinedGroups(command.requestedUserId);
+        
+        const notifyBadge = async (title: string, message: string) => {
+          const notificationUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3005/notifications';
+          await fetch(notificationUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: command.requestedUserId,
+              title,
+              message,
+              type: 'SISTEMA',
+              read: false,
+            }),
+          });
+        };
+
+        if (userJoinedCount === 1) {
+          await notifyBadge('🔍 Insignia Desbloqueada: Explorador Académico', 'Te uniste a tu primer grupo de estudio.');
+        }
+      } catch (badgeError) {
+        eventLogger.error('AcceptStudyGroupRequestUseCase.badgeCheck', 'Failed to check/notify badges', badgeError);
+      }
+
       return {
         data: updatedGroup,
         error: null,

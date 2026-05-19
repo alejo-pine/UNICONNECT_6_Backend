@@ -1,4 +1,5 @@
 import { Profile, UploadAvatarInput } from '../entities/profile';
+import { ProfileStatistics, ProfileBadge } from '../entities/profileDecorator';
 
 export interface PublicProfileRecord {
   name: string;
@@ -18,4 +19,6 @@ export interface ProfileRepositoryPort {
   updateById(id: string, updates: Partial<Profile>): Promise<Profile | null>;
   uploadAvatar(profileId: string, file: UploadAvatarInput): Promise<string>;
   updateAvatarUrl(id: string, avatarUrl: string): Promise<Profile | null>;
+  getProfileStatistics(profileId: string): Promise<ProfileStatistics>;
+  getProfileBadges(profileId: string): Promise<ProfileBadge[]>;
 }

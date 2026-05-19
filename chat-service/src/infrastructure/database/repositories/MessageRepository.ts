@@ -207,4 +207,18 @@ export class MessageRepository implements IMessageRepository {
     if (!data) return null;
     return (data as { conversation_id: string }).conversation_id;
   }
+
+  async countSentMessages(senderId: string): Promise<number> {
+    const { count, error } = await this.supabase
+      .from('direct_message')
+      .select('id', { count: 'exact', head: true })
+      .eq('sender_id', senderId);
+
+    if (error) {
+      logger.error('Error counting sent messages', { senderId, error: error.message });
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    return count ?? 0;
+  }
 }
