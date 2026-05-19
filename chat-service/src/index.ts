@@ -28,6 +28,11 @@ import { GetWallAttachmentUrlUseCase } from './application/use-cases/GetWallAtta
 
 // ── Infrastructure: Socket.IO ─────────────────────────────────────────────────
 import { initSocketServer } from './infrastructure/socket/socketServer';
+import { WallSocketObserver } from './infrastructure/socket/WallSocketObserver';
+import { DmSocketObserver } from './infrastructure/socket/DmSocketObserver';
+
+// ── Domain: Observer pattern ──────────────────────────────────────────────────
+import { ChatSubject } from './domain/observer/ChatSubject';
 
 // ── Infrastructure: HTTP ──────────────────────────────────────────────────────
 import { ConversationController } from './infrastructure/http/controllers/ConversationController';
@@ -68,7 +73,18 @@ function bootstrap(): void {
   // ── 5. Socket.IO server (singleton, shares httpServer) ─────────────────────
   const io = initSocketServer(httpServer, conversationRepo, groupRepo);
 
-  // ── 6. Controllers (need io to emit events after REST operations) ───────────
+  // ── 6. Observer pattern ────────────────────────────────────────────────────
+  //  Canal WALL: chatSubject → WallSocketObserver → sala "wall:<id>"
+  const chatSubject = new ChatSubject();
+  chatSubject.subscribe(new WallSocketObserver(io));
+
+  //  Canal DM: dmSubject → DmSocketObserver → sala "conversation:<id>"
+  //  Instancia TOTALMENTE INDEPENDIENTE de chatSubject: lista de observers
+  //  distinta, sin canal compartido ni estado compartido.
+  const dmSubject = new ChatSubject();
+  dmSubject.subscribe(new DmSocketObserver(io));
+
+  // ── 7. Controllers (inject subjects, not io directly) ───────────────────────
   const conversationController = new ConversationController(
     listConversations,
     findOrCreateConversation,
@@ -79,10 +95,10 @@ function bootstrap(): void {
     listMessages,
     sendMessage,
     conversationRepo,
-    io
+    dmSubject
   );
 
-  const wallPostController = new WallPostController(listWallPosts, createWallPost, listWallInbox, io);
+  const wallPostController = new WallPostController(listWallPosts, createWallPost, listWallInbox, chatSubject);
 
   const attachmentController = new AttachmentController(getDmAttachmentUrl, getWallAttachmentUrl);
 
