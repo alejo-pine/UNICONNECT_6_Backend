@@ -4,6 +4,7 @@ import { eventLogger } from '../../utils/eventLogger';
 
 export class StudySessionCronNotifier {
   private intervalId?: NodeJS.Timeout;
+  private notifiedSessions = new Set<string>();
 
   constructor(
     private readonly sessionRepository: StudySessionRepositoryPort,
@@ -49,7 +50,15 @@ export class StudySessionCronNotifier {
         const diffMs = startTime.getTime() - now.getTime();
 
         if (diffMs >= targetMs - windowMs && diffMs <= targetMs + windowMs) {
-          await this.notifyGroupMembers(session);
+          if (!this.notifiedSessions.has(session.id)) {
+            this.notifiedSessions.add(session.id);
+            await this.notifyGroupMembers(session);
+            
+            // Clean up the set after 5 minutes to prevent memory leak
+            setTimeout(() => {
+              this.notifiedSessions.delete(session.id);
+            }, 5 * 60 * 1000);
+          }
         }
       } catch (err) {
         eventLogger.error('StudySessionCronNotifier.notifyGroupMembers', `Error notifying for session ${session.id}`, err);

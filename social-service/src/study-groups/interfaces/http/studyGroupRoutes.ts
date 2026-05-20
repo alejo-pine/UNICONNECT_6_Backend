@@ -22,6 +22,8 @@ import {
   createResource,
   getGroupResources,
   editResource,
+  deleteStudySession,
+  updateSessionAttendance,
 } from './studyGroupController';
 
 const router: Router = Router();
@@ -110,6 +112,18 @@ router.get(
   '/:groupId/sessions',
   authMiddleware,
   asyncHandler((req, res) => getStudySessions(req as AuthenticatedRequest, res))
+);
+
+router.delete(
+  '/:groupId/sessions/:sessionId',
+  authMiddleware,
+  asyncHandler((req, res) => deleteStudySession(req as AuthenticatedRequest, res))
+);
+
+router.post(
+  '/:groupId/sessions/:sessionId/attendance',
+  authMiddleware,
+  asyncHandler((req, res) => updateSessionAttendance(req as AuthenticatedRequest, res))
 );
 
 router.post(
