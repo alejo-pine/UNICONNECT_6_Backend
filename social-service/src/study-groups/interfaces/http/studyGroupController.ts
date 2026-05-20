@@ -5,6 +5,10 @@ import { HttpError } from '../../../utils/httpError';
 import { handleControllerError } from '../../../utils/studyGroupControllerHelper';
 import { toStudyGroupApiResponse, toStudyGroupApiResponseList } from './presenters/studyGroupPresenter';
 import { studyGroupDependencies } from './dependencies';
+import { CreateResourceUseCase } from '../../application/use-cases/createResourceUseCase';
+import { ExtractOpenGraphUseCase } from '../../application/use-cases/extractOpenGraphUseCase';
+import { EditResourceUseCase } from '../../application/use-cases/editResourceUseCase';
+import { supabase } from '../../../utils/supabaseClient';
 
 export const createStudyGroup = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -460,6 +464,140 @@ export const getStudySessions = async (req: AuthenticatedRequest, res: Response)
     handleControllerError(err, res, 'studyGroupController.getStudySessions', {
       userId: (req.user as { id?: string } | undefined)?.id,
       groupId: req.params?.groupId,
+    });
+  }
+};
+
+export const extractOpenGraph = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const url = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+    if (!url) {
+      throw new HttpError(400, 'Query param "url" is required');
+    }
+
+    const useCase = new ExtractOpenGraphUseCase();
+    const result = await useCase.execute(url);
+
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.extractOpenGraph', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+    });
+  }
+};
+
+export const createResource = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required');
+    }
+
+    const payload = req.body;
+    
+    const useCase = new CreateResourceUseCase();
+    const result = await useCase.execute({
+      groupId,
+      userId: req.user.id,
+      url: payload.url,
+      title: payload.title || '',
+      description: payload.description || '',
+      imageUrl: payload.imageUrl || '',
+      roleRequired: payload.roleRequired || 'member'
+    });
+
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.createResource', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
+
+export const getGroupResources = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    if (!groupId) {
+      throw new HttpError(400, 'Field "groupId" is required');
+    }
+
+    // Obtenemos los recursos directamente. Gracias a las RLS de Supabase,
+    // el usuario solo recibirá los recursos a los que tiene acceso.
+    const { data, error } = await supabase
+      .from('group_resources')
+      .select(`
+        id,
+        group_id,
+        url,
+        title,
+        description,
+        image_url,
+        role_required,
+        created_at,
+        uploaded_by,
+        metadata
+      `)
+      .eq('group_id', groupId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    sendServiceResult(res, { data, error: null, statusCode: 200 });
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.getGroupResources', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+    });
+  }
+};
+
+export const editResource = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new HttpError(401, 'Authentication required');
+    }
+
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    const resourceId = typeof req.params.resourceId === 'string' ? req.params.resourceId.trim() : '';
+
+    if (!groupId || !resourceId) {
+      throw new HttpError(400, 'Fields "groupId" and "resourceId" are required');
+    }
+
+    const payload = req.body;
+    
+    const useCase = new EditResourceUseCase();
+    const result = await useCase.execute({
+      resourceId,
+      groupId,
+      userId: req.user.id,
+      title: payload.title,
+      description: payload.description,
+      roleRequired: payload.roleRequired,
+      metadata: payload.metadata
+    });
+
+    sendServiceResult(res, result);
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.editResource', {
+      userId: (req.user as { id?: string } | undefined)?.id,
+      groupId: req.params?.groupId,
+      resourceId: req.params?.resourceId,
     });
   }
 };
