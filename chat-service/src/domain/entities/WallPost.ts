@@ -9,6 +9,8 @@ export interface WallPostAttachment {
   uploadedAt: Date;
 }
 
+import { PollWithResults } from './Poll';
+
 export interface WallPost {
   id: string;
   groupId: string;
@@ -18,6 +20,7 @@ export interface WallPost {
   content: string | null;
   attachments: WallPostAttachment[];
   createdAt: Date;
+  poll?: PollWithResults;
 }
 
 export interface CreateWallAttachmentInput {
