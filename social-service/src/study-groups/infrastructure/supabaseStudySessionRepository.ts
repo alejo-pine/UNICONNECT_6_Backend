@@ -16,6 +16,12 @@ const mapSession = (row: any): StudySession => ({
   seriesId: row.series_id,
   recurrenceType: row.recurrence_type,
   createdAt: row.created_at,
+  attendances: row.attendances?.map((a: any) => ({
+    sessionId: row.id,
+    userId: a.user_id,
+    status: a.status,
+    updatedAt: a.updated_at,
+  })) || [],
 });
 
 export class SupabaseStudySessionRepository implements StudySessionRepositoryPort {
@@ -35,7 +41,7 @@ export class SupabaseStudySessionRepository implements StudySessionRepositoryPor
     const { data, error } = await supabase
       .from(TABLE_NAME)
       .insert(records)
-      .select('*')
+      .select('*, attendances:group_study_sessions_attendances(user_id, status, updated_at)')
       .order('start_time', { ascending: true });
 
     if (error) {
@@ -48,7 +54,7 @@ export class SupabaseStudySessionRepository implements StudySessionRepositoryPor
   async findByGroupId(groupId: string): Promise<StudySession[]> {
     const { data, error } = await supabase
       .from(TABLE_NAME)
-      .select('*')
+      .select('*, attendances:group_study_sessions_attendances(user_id, status, updated_at)')
       .eq('group_id', groupId)
       .order('start_time', { ascending: true });
 
@@ -62,7 +68,7 @@ export class SupabaseStudySessionRepository implements StudySessionRepositoryPor
   async findById(sessionId: string): Promise<StudySession | null> {
     const { data, error } = await supabase
       .from(TABLE_NAME)
-      .select('*')
+      .select('*, attendances:group_study_sessions_attendances(user_id, status, updated_at)')
       .eq('id', sessionId)
       .maybeSingle();
 
@@ -82,7 +88,7 @@ export class SupabaseStudySessionRepository implements StudySessionRepositoryPor
 
     const { data, error } = await supabase
       .from(TABLE_NAME)
-      .select('*')
+      .select('*, attendances:group_study_sessions_attendances(user_id, status, updated_at)')
       .gte('start_time', from.toISOString())
       .lte('start_time', to.toISOString());
 
@@ -105,7 +111,7 @@ export class SupabaseStudySessionRepository implements StudySessionRepositoryPor
       .from(TABLE_NAME)
       .update(updateRecord)
       .eq('id', sessionId)
-      .select('*')
+      .select('*, attendances:group_study_sessions_attendances(user_id, status, updated_at)')
       .single();
 
     if (error) {
@@ -135,7 +141,7 @@ export class SupabaseStudySessionRepository implements StudySessionRepositoryPor
       .update(updateRecord)
       .eq('series_id', seriesId)
       .gte('start_time', fromDateNormalized)
-      .select('*')
+      .select('*, attendances:group_study_sessions_attendances(user_id, status, updated_at)')
       .order('start_time', { ascending: true });
 
     if (error) {
@@ -153,6 +159,19 @@ export class SupabaseStudySessionRepository implements StudySessionRepositoryPor
 
     if (error) {
       throw new Error(`Failed to delete study session: ${error.message}`);
+    }
+  }
+
+  async upsertAttendance(sessionId: string, userId: string, status: 'attending' | 'declined' | 'pending'): Promise<void> {
+    const { error } = await supabase
+      .from('group_study_sessions_attendances')
+      .upsert(
+        { session_id: sessionId, user_id: userId, status },
+        { onConflict: 'session_id,user_id' }
+      );
+
+    if (error) {
+      throw new Error(`Failed to upsert attendance: ${error.message}`);
     }
   }
 }

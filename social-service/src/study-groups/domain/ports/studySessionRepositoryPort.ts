@@ -8,4 +8,5 @@ export interface StudySessionRepositoryPort {
   updateSession(sessionId: string, updates: Partial<Omit<StudySession, 'id' | 'createdAt'>>): Promise<StudySession>;
   updateSeriesFrom(seriesId: string, fromDate: string, updates: Partial<Omit<StudySession, 'id' | 'createdAt'>>): Promise<StudySession[]>;
   deleteSession(sessionId: string): Promise<void>;
+  upsertAttendance(sessionId: string, userId: string, status: 'attending' | 'declined' | 'pending'): Promise<void>;
 }

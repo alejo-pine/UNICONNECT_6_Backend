@@ -601,3 +601,48 @@ export const editResource = async (req: AuthenticatedRequest, res: Response): Pr
     });
   }
 };
+
+export const deleteStudySession = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) throw new HttpError(401, 'Authentication required');
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    const sessionId = typeof req.params.sessionId === 'string' ? req.params.sessionId.trim() : '';
+    
+    if (!groupId || !sessionId) throw new HttpError(400, 'Fields "groupId" and "sessionId" are required');
+
+    await studyGroupDependencies.deleteStudySessionUseCase.execute(groupId, sessionId, req.user.id);
+
+    sendServiceResult(res, { data: { success: true }, error: null, statusCode: 200 });
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.deleteStudySession', {
+      userId: req.user?.id,
+      groupId: req.params?.groupId,
+      sessionId: req.params?.sessionId,
+    });
+  }
+};
+
+export const updateSessionAttendance = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user?.id) throw new HttpError(401, 'Authentication required');
+    const groupId = typeof req.params.groupId === 'string' ? req.params.groupId.trim() : '';
+    const sessionId = typeof req.params.sessionId === 'string' ? req.params.sessionId.trim() : '';
+    
+    if (!groupId || !sessionId) throw new HttpError(400, 'Fields "groupId" and "sessionId" are required');
+
+    const status = req.body.status;
+    if (!['attending', 'declined', 'pending'].includes(status)) {
+      throw new HttpError(400, 'Invalid status');
+    }
+
+    await studyGroupDependencies.updateSessionAttendanceUseCase.execute(groupId, sessionId, req.user.id, status);
+
+    sendServiceResult(res, { data: { success: true }, error: null, statusCode: 200 });
+  } catch (err: unknown) {
+    handleControllerError(err, res, 'studyGroupController.updateSessionAttendance', {
+      userId: req.user?.id,
+      groupId: req.params?.groupId,
+      sessionId: req.params?.sessionId,
+    });
+  }
+};

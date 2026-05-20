@@ -13,6 +13,9 @@ import { RespondAdminTransferUseCase } from '../../application/use-cases/respond
 import { CreateStudySessionUseCase } from '../../application/use-cases/createStudySessionUseCase';
 import { UpdateStudySessionUseCase } from '../../application/use-cases/updateStudySessionUseCase';
 import { GetStudySessionsUseCase } from '../../application/use-cases/getStudySessionsUseCase';
+import { DeleteStudySessionUseCase } from '../../application/use-cases/deleteStudySessionUseCase';
+import { UpdateSessionAttendanceUseCase } from '../../application/use-cases/updateSessionAttendanceUseCase';
+import { SessionAttendanceObserver } from '../../infrastructure/observers/SessionAttendanceObserver';
 import { SupabaseStudyGroupRepository } from '../../infrastructure/supabaseStudyGroupRepository';
 import { SupabaseSubjectRepository } from '../../infrastructure/supabaseSubjectRepository';
 import { SupabaseStudySessionRepository } from '../../infrastructure/supabaseStudySessionRepository';
@@ -40,6 +43,8 @@ export const studyGroupDependencies = {
   createStudySessionUseCase: new CreateStudySessionUseCase(studySessionRepository, studyGroupRepository),
   updateStudySessionUseCase: new UpdateStudySessionUseCase(studySessionRepository, studyGroupRepository),
   getStudySessionsUseCase: new GetStudySessionsUseCase(studySessionRepository),
+  deleteStudySessionUseCase: new DeleteStudySessionUseCase(studySessionRepository, studyGroupRepository),
+  updateSessionAttendanceUseCase: new UpdateSessionAttendanceUseCase(studySessionRepository, new SessionAttendanceObserver(studySessionRepository, studyGroupRepository)),
 };
 
 export const studySessionCronNotifier = new StudySessionCronNotifier(studySessionRepository, studyGroupRepository, 60000, 18);

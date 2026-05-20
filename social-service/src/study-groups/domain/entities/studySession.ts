@@ -12,6 +12,16 @@ export interface StudySession {
   seriesId: string | null;
   recurrenceType: RecurrenceType;
   createdAt: string;
+  attendances?: SessionAttendance[];
+}
+
+export type AttendanceStatus = 'attending' | 'declined' | 'pending';
+
+export interface SessionAttendance {
+  sessionId: string;
+  userId: string;
+  status: AttendanceStatus;
+  updatedAt: string;
 }
 
 export interface CreateStudySessionInput {
