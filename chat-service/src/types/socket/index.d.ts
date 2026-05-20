@@ -39,6 +39,9 @@ export interface SocketErrorPayload {
 export interface ServerToClientEvents {
   'dm:new_message': (payload: DmNewMessagePayload) => void;
   'wall:new_post': (payload: WallNewPostPayload) => void;
+  'encuesta:creada': (payload: any) => void;
+  'encuesta:votoRegistrado': (payload: any) => void;
+  'encuesta:cerrada': (payload: any) => void;
   error: (payload: SocketErrorPayload) => void;
 }
 

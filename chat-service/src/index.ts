@@ -42,6 +42,13 @@ import { ConversationController } from './infrastructure/http/controllers/Conver
 import { MessageController } from './infrastructure/http/controllers/MessageController';
 import { WallPostController } from './infrastructure/http/controllers/WallPostController';
 import { AttachmentController } from './infrastructure/http/controllers/AttachmentController';
+import { PollController } from './infrastructure/http/controllers/PollController';
+import { PollRepository } from './infrastructure/database/repositories/PollRepository';
+import { CreatePollUseCase } from './application/use-cases/CreatePollUseCase';
+import { VoteInPollUseCase } from './application/use-cases/VoteInPollUseCase';
+import { ClosePollUseCase } from './application/use-cases/ClosePollUseCase';
+import { PollSocketObserver } from './infrastructure/socket/PollSocketObserver';
+import { PollExpirationScheduler } from './infrastructure/services/PollExpirationScheduler';
 import { createExpressApp } from './infrastructure/http/server';
 
 function bootstrap(): void {
@@ -56,6 +63,7 @@ function bootstrap(): void {
   const wallPostRepo = new WallPostRepository(supabase);
   const groupRepo = new GroupRepository(supabase);
   const storageRepo = new StorageRepository(supabase);
+  const pollRepo = new PollRepository(supabase);
 
   // ── 3. Factory: Chain of Responsibility (compone las cadenas de validación) ──
   // Único punto donde se ensamblan y se inyectan los repositorios a la cadena.
@@ -72,6 +80,9 @@ function bootstrap(): void {
   const listWallInbox = new ListWallInboxUseCase(groupRepo);
   const getDmAttachmentUrl = new GetDmAttachmentUrlUseCase(messageRepo, conversationRepo, storageRepo);
   const getWallAttachmentUrl = new GetWallAttachmentUrlUseCase(wallPostRepo, groupRepo, storageRepo);
+  const createPoll = new CreatePollUseCase(wallPostRepo, pollRepo, groupRepo);
+  const voteInPoll = new VoteInPollUseCase(pollRepo, wallPostRepo, groupRepo);
+  const closePoll = new ClosePollUseCase(pollRepo, wallPostRepo);
 
   // ── 5. HTTP server ─────────────────────────────────────────────────────────
   //    Create the raw HTTP server first so Socket.IO and Express share it.
@@ -84,12 +95,16 @@ function bootstrap(): void {
   //  Canal WALL: chatSubject → WallSocketObserver → sala "wall:<id>"
   const chatSubject = new ChatSubject();
   chatSubject.subscribe(new WallSocketObserver(io));
+  chatSubject.subscribe(new PollSocketObserver(io));
 
   //  Canal DM: dmSubject → DmSocketObserver → sala "conversation:<id>"
   //  Instancia TOTALMENTE INDEPENDIENTE de chatSubject: lista de observers
   //  distinta, sin canal compartido ni estado compartido.
   const dmSubject = new ChatSubject();
   dmSubject.subscribe(new DmSocketObserver(io));
+
+  const pollExpirationScheduler = new PollExpirationScheduler(pollRepo, closePoll, chatSubject);
+  pollExpirationScheduler.start();
 
   // ── 8. Controllers (inject subjects, not io directly) ───────────────────────
   const conversationController = new ConversationController(
@@ -109,12 +124,15 @@ function bootstrap(): void {
 
   const attachmentController = new AttachmentController(getDmAttachmentUrl, getWallAttachmentUrl);
 
+  const pollController = new PollController(createPoll, voteInPoll, closePoll, chatSubject);
+
   // ── 9. Express app ─────────────────────────────────────────────────────────
   const app = createExpressApp(
     conversationController,
     messageController,
     wallPostController,
-    attachmentController
+    attachmentController,
+    pollController
   );
 
   // Attach Express to the shared HTTP server
