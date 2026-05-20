@@ -34,6 +34,9 @@ import { DmSocketObserver } from './infrastructure/socket/DmSocketObserver';
 // ── Domain: Observer pattern ──────────────────────────────────────────────────
 import { ChatSubject } from './domain/observer/ChatSubject';
 
+// ── Infrastructure: Factories (Chain of Responsibility) ───────────────────────
+import { ValidationChainFactory } from './infrastructure/factories/ValidationChainFactory';
+
 // ── Infrastructure: HTTP ──────────────────────────────────────────────────────
 import { ConversationController } from './infrastructure/http/controllers/ConversationController';
 import { MessageController } from './infrastructure/http/controllers/MessageController';
@@ -54,26 +57,30 @@ function bootstrap(): void {
   const groupRepo = new GroupRepository(supabase);
   const storageRepo = new StorageRepository(supabase);
 
-  // ── 3. Use cases (injected with repository interfaces) ─────────────────────
+  // ── 3. Factory: Chain of Responsibility (compone las cadenas de validación) ──
+  // Único punto donde se ensamblan y se inyectan los repositorios a la cadena.
+  const validationChainFactory = new ValidationChainFactory(conversationRepo, groupRepo);
+
+  // ── 4. Use cases (injected with repository interfaces) ─────────────────────
   const listConversations = new ListConversationsUseCase(conversationRepo);
   const findOrCreateConversation = new FindOrCreateConversationUseCase(conversationRepo);
   const getConversation = new GetConversationUseCase(conversationRepo);
   const listMessages = new ListMessagesUseCase(conversationRepo, messageRepo);
-  const sendMessage = new SendMessageUseCase(conversationRepo, messageRepo);
+  const sendMessage = new SendMessageUseCase(messageRepo, validationChainFactory);
   const listWallPosts = new ListWallPostsUseCase(wallPostRepo, groupRepo);
-  const createWallPost = new CreateWallPostUseCase(wallPostRepo, groupRepo);
+  const createWallPost = new CreateWallPostUseCase(wallPostRepo, validationChainFactory);
   const listWallInbox = new ListWallInboxUseCase(groupRepo);
   const getDmAttachmentUrl = new GetDmAttachmentUrlUseCase(messageRepo, conversationRepo, storageRepo);
   const getWallAttachmentUrl = new GetWallAttachmentUrlUseCase(wallPostRepo, groupRepo, storageRepo);
 
-  // ── 4. HTTP server ─────────────────────────────────────────────────────────
+  // ── 5. HTTP server ─────────────────────────────────────────────────────────
   //    Create the raw HTTP server first so Socket.IO and Express share it.
   const httpServer = createServer();
 
-  // ── 5. Socket.IO server (singleton, shares httpServer) ─────────────────────
+  // ── 6. Socket.IO server (singleton, shares httpServer) ─────────────────────
   const io = initSocketServer(httpServer, conversationRepo, groupRepo);
 
-  // ── 6. Observer pattern ────────────────────────────────────────────────────
+  // ── 7. Observer pattern ────────────────────────────────────────────────────
   //  Canal WALL: chatSubject → WallSocketObserver → sala "wall:<id>"
   const chatSubject = new ChatSubject();
   chatSubject.subscribe(new WallSocketObserver(io));
@@ -84,7 +91,7 @@ function bootstrap(): void {
   const dmSubject = new ChatSubject();
   dmSubject.subscribe(new DmSocketObserver(io));
 
-  // ── 7. Controllers (inject subjects, not io directly) ───────────────────────
+  // ── 8. Controllers (inject subjects, not io directly) ───────────────────────
   const conversationController = new ConversationController(
     listConversations,
     findOrCreateConversation,
@@ -102,7 +109,7 @@ function bootstrap(): void {
 
   const attachmentController = new AttachmentController(getDmAttachmentUrl, getWallAttachmentUrl);
 
-  // ── 7. Express app ─────────────────────────────────────────────────────────
+  // ── 9. Express app ─────────────────────────────────────────────────────────
   const app = createExpressApp(
     conversationController,
     messageController,
