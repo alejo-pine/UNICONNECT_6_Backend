@@ -18,11 +18,21 @@ import {
   rejectStudyGroupRequest,
   transferStudyGroupAdmin,
   getStudySessions,
+  extractOpenGraph,
+  createResource,
+  getGroupResources,
+  editResource,
 } from './studyGroupController';
 
 const router: Router = Router();
 
 router.get('/', asyncHandler((req, res) => getAllStudyGroups(req as AuthenticatedRequest, res)));
+
+router.get(
+  '/open-graph',
+  authMiddleware,
+  asyncHandler((req, res) => extractOpenGraph(req as AuthenticatedRequest, res))
+);
 
 router.get(
   '/by-subject/:subjectId',
@@ -100,6 +110,24 @@ router.get(
   '/:groupId/sessions',
   authMiddleware,
   asyncHandler((req, res) => getStudySessions(req as AuthenticatedRequest, res))
+);
+
+router.post(
+  '/:groupId/resources',
+  authMiddleware,
+  asyncHandler((req, res) => createResource(req as AuthenticatedRequest, res))
+);
+
+router.get(
+  '/:groupId/resources',
+  authMiddleware,
+  asyncHandler((req, res) => getGroupResources(req as AuthenticatedRequest, res))
+);
+
+router.put(
+  '/:groupId/resources/:resourceId',
+  authMiddleware,
+  asyncHandler((req, res) => editResource(req as AuthenticatedRequest, res))
 );
 
 router.put(
