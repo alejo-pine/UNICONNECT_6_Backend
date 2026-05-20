@@ -25,6 +25,6 @@ export class ListWallPostsUseCase {
     }
 
     const pagination: PaginationCursor = { limit, before };
-    return this.wallPostRepo.listByGroup(groupId, pagination);
+    return this.wallPostRepo.listByGroup(groupId, pagination, userId);
   }
 }

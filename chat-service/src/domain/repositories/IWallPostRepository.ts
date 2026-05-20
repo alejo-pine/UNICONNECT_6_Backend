@@ -12,7 +12,7 @@ export interface IWallPostRepository {
   /**
    * Returns paginated wall posts for a group using cursor-based pagination.
    */
-  listByGroup(groupId: string, pagination: PaginationCursor): Promise<WallPost[]>;
+  listByGroup(groupId: string, pagination: PaginationCursor, userId?: string): Promise<WallPost[]>;
 
   /**
    * Finds a wall post attachment by its ID.

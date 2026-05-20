@@ -1,11 +1,9 @@
-// src/application/use-cases/SendMessageUseCase.ts
-
-import { IConversationRepository } from '../../domain/repositories/IConversationRepository';
 import { IMessageRepository } from '../../domain/repositories/IMessageRepository';
 import { Message, CreateMessageInput, CreateAttachmentInput } from '../../domain/entities/Message';
 import { ForbiddenError } from '../../shared/errors/ForbiddenError';
 import { ValidationError } from '../../shared/errors/ValidationError';
-import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from '../../shared/constants';
+import { ValidationChainFactory } from '../../infrastructure/factories/ValidationChainFactory';
+import { ValidationContext } from '../../domain/validation/ValidationContext';
 
 export interface SendMessageInput {
   conversationId: string;
@@ -16,30 +14,35 @@ export interface SendMessageInput {
 
 export class SendMessageUseCase {
   constructor(
-    private readonly conversationRepo: IConversationRepository,
-    private readonly messageRepo: IMessageRepository
+    private readonly messageRepo: IMessageRepository,
+    private readonly validationChainFactory: ValidationChainFactory
   ) {}
 
   async execute(input: SendMessageInput): Promise<Message> {
-    const isParticipant = await this.conversationRepo.isParticipant(
-      input.conversationId,
-      input.senderId
-    );
+    const contexto: ValidationContext = {
+      senderId: input.senderId,
+      destinationType: 'dm',
+      content: input.content,
+      attachments: input.attachments?.map((a) => ({
+        fileName: a.fileName,
+        fileType: a.fileType,
+        fileSize: a.fileSize,
+        storagePath: a.storagePath,
+      })),
+      conversationId: input.conversationId,
+    };
 
-    if (!isParticipant) {
-      throw new ForbiddenError('You are not a participant of this conversation');
+    const cadena = this.validationChainFactory.crearCadenaDm();
+    const resultado = await cadena.manejar(contexto);
+
+    if (!resultado.valido) {
+      if (resultado.codigoError === 'FORBIDDEN') {
+        throw new ForbiddenError(resultado.detalle ?? 'Forbidden');
+      }
+      throw new ValidationError(resultado.detalle ?? 'Validation failed');
     }
 
     const hasContent = input.content !== undefined && input.content.trim().length > 0;
-    const hasAttachments = input.attachments !== undefined && input.attachments.length > 0;
-
-    if (!hasContent && !hasAttachments) {
-      throw new ValidationError('Message must have content or at least one attachment');
-    }
-
-    if (hasAttachments) {
-      this.validateAttachments(input.attachments!);
-    }
 
     const createInput: CreateMessageInput = {
       conversationId: input.conversationId,
@@ -50,7 +53,6 @@ export class SendMessageUseCase {
 
     const message = await this.messageRepo.create(createInput);
 
-    // BADGE NOTIFICATION LOGIC
     try {
       const messagesCount = await this.messageRepo.countSentMessages(input.senderId);
       if (messagesCount === 10) {
@@ -72,23 +74,5 @@ export class SendMessageUseCase {
     }
 
     return message;
-  }
-
-  private validateAttachments(attachments: CreateAttachmentInput[]): void {
-    for (const attachment of attachments) {
-      if (!ALLOWED_MIME_TYPES.includes(attachment.fileType)) {
-        throw new ValidationError(`File type not allowed: ${attachment.fileType}`);
-      }
-
-      if (attachment.fileSize > MAX_FILE_SIZE_BYTES) {
-        throw new ValidationError(
-          `File "${attachment.fileName}" exceeds the maximum allowed size of 20 MB`
-        );
-      }
-
-      if (!attachment.storagePath || attachment.storagePath.trim() === '') {
-        throw new ValidationError(`Storage path is required for attachment "${attachment.fileName}"`);
-      }
-    }
   }
 }

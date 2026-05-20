@@ -6,12 +6,14 @@ import { ConversationController } from './controllers/ConversationController';
 import { MessageController } from './controllers/MessageController';
 import { WallPostController } from './controllers/WallPostController';
 import { AttachmentController } from './controllers/AttachmentController';
+import { PollController } from './controllers/PollController';
 
 export function createRouter(
   conversationController: ConversationController,
   messageController: MessageController,
   wallPostController: WallPostController,
-  attachmentController: AttachmentController
+  attachmentController: AttachmentController,
+  pollController: PollController
 ): Router {
   const router = Router();
 
@@ -44,6 +46,16 @@ export function createRouter(
 
   // POST /api/groups/:groupId/wall
   router.post('/groups/:groupId/wall', wallPostController.createPost);
+
+  // ── Polls ────────────────────────────────────────────────────────────────────
+  // POST /api/groups/:groupId/wall/polls
+  router.post('/groups/:groupId/wall/polls', pollController.createPoll);
+
+  // POST /api/polls/:pollId/votes
+  router.post('/polls/:pollId/votes', pollController.vote);
+
+  // PATCH /api/polls/:pollId/close
+  router.patch('/polls/:pollId/close', pollController.close);
 
   // ── Attachment signed URLs ───────────────────────────────────────────────────
   // GET  /api/attachments/dm/:attachmentId/url

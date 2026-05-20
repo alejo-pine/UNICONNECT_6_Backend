@@ -19,6 +19,10 @@ export const SOCKET_EVENTS = {
   // Server → Client
   DM_NEW_MESSAGE: 'dm:new_message',
   WALL_NEW_POST: 'wall:new_post',
+  // Polls (US-V04)
+  WALL_POLL_CREATED: 'encuesta:creada',
+  WALL_POLL_VOTED: 'encuesta:votoRegistrado',
+  WALL_POLL_CLOSED: 'encuesta:cerrada',
   ERROR: 'error',
 } as const;
 

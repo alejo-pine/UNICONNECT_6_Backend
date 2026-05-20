@@ -8,13 +8,15 @@ import { ConversationController } from './controllers/ConversationController';
 import { MessageController } from './controllers/MessageController';
 import { WallPostController } from './controllers/WallPostController';
 import { AttachmentController } from './controllers/AttachmentController';
+import { PollController } from './controllers/PollController';
 import { logger } from '../../shared/logger';
 
 export function createExpressApp(
   conversationController: ConversationController,
   messageController: MessageController,
   wallPostController: WallPostController,
-  attachmentController: AttachmentController
+  attachmentController: AttachmentController,
+  pollController: PollController
 ): Application {
   const app = express();
 
@@ -43,7 +45,8 @@ export function createExpressApp(
       conversationController,
       messageController,
       wallPostController,
-      attachmentController
+      attachmentController,
+      pollController
     )
   );
 
