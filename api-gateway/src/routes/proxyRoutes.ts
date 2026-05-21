@@ -56,11 +56,13 @@ const proxyRequest = async (
     delete headers['accept-encoding'];
     headers['accept-encoding'] = 'identity';
 
+    const isMultipart = req.headers['content-type']?.startsWith('multipart/form-data');
+
     const config = {
       method: req.method as any,
       url: targetUrl,
       headers,
-      data: req.body,
+      data: isMultipart ? req : req.body,
       validateStatus: () => true,
       // Desactivar descompresión automática de axios para control total
       decompress: true,

@@ -1,4 +1,4 @@
-import { ServiceResult } from '../../dto/serviceResult';
+import { ServiceResult } from '../../../shared/application/serviceResult';
 import { supabase } from '../../../utils/supabaseClient';
 import { HttpError } from '../../../utils/httpError';
 import { eventLogger } from '../../../utils/eventLogger';

@@ -6,8 +6,8 @@ import { OnboardingRepositoryPort, OnboardingStateRecord } from '../../domain/po
 const toOnboardingStatus = (state: OnboardingStateRecord | null): OnboardingStatus => {
   if (!state) {
     return {
-      needsOnboarding: false,
-      isCompleted: true,
+      needsOnboarding: true,
+      isCompleted: false,
       completedAt: null,
       skippedAt: null,
     };
