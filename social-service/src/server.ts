@@ -8,6 +8,14 @@ import studyGroupsRouter from './study-groups/interfaces/http/studyGroupRoutes';
 import eventsRouter from './events/interfaces/http/eventRoutes';
 import app from './app';
 import { initStudyGroupSocketServer } from './infrastructure/socket/studyGroupSocketServer';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ============================================================================
 // MIDDLEWARE
@@ -23,6 +31,24 @@ app.use('/events', eventsRouter);
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', version: '1.0.0' });
+});
+
+// Swagger UI endpoint
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/openapi.json', (req, res) => {
+  try {
+    const docsPath = path.resolve(__dirname, '../docs/openapi.json');
+    if (fs.existsSync(docsPath)) {
+      const spec = JSON.parse(fs.readFileSync(docsPath, 'utf8'));
+      res.setHeader('Content-Type', 'application/json');
+      res.send(spec);
+    } else {
+      res.status(404).json({ error: 'OpenAPI spec not found. Did you run build:openapi?' });
+    }
+  } catch (error) {
+    console.error('Error reading openapi.json:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 // ============================================================================

@@ -10,6 +10,7 @@ import profileSubjectsRoutes from './profile-subjects/interfaces/http/profileSub
 import onboardingRoutes from './onboarding/interfaces/http/onboardingRoutes';
 import subjectRoutes from './subjects/interfaces/http/subjectRoutes';
 import studentsRoutes from './students/interfaces/http/studentsRoutes';
+import { swaggerSpec } from './config/swagger';
 
 type RequestError = Error & {
   statusCode?: number;
@@ -82,6 +83,14 @@ app.use(express.urlencoded({ extended: true }));
  */
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', version: '1.0.0', service: 'profile-service' });
+});
+
+/**
+ * OpenAPI endpoint
+ */
+app.get('/openapi.json', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
 /**

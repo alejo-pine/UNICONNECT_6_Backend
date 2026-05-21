@@ -12,54 +12,248 @@ import {
 const router: Router = Router();
 
 /**
- * GET /onboarding/status
- * Obtiene el estado actual del onboarding para el perfil del usuario autenticado
- * Requiere autenticación - obtiene profileId del token JWT
- * Alias: GET /status/:profileId también funciona
+ * @openapi
+ * /onboarding/status:
+ *   get:
+ *     summary: Get onboarding status
+ *     tags: [Onboarding]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Status response
  */
 router.get('/status', asyncHandler(getOnboardingStatus));
+/**
+ * @openapi
+ * /status/{profileId}:
+ *   get:
+ *     summary: GET /status/{profileId}
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: profileId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
+ */
+/**
+ * @openapi
+ * /status/{profileId}:
+ *   get:
+ *     summary: GET /status/{profileId}
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: profileId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
+ */
 router.get('/status/:profileId', asyncHandler(getOnboardingStatus));
 
 /**
- * GET /onboarding/programs
- * Obtiene listado de programas/carreras disponibles
- * No requiere autenticación (datos públicos)
+ * @openapi
+ * /onboarding/programs:
+ *   get:
+ *     summary: Get onboarding programs
+ *     tags: [Onboarding]
+ *     responses:
+ *       200:
+ *         description: Programs list
  */
 router.get('/programs', asyncHandler(getOnboardingPrograms));
 
 /**
- * POST /onboarding/mark
- * Marca un nuevo perfil como "requiere onboarding"
- * Se ejecuta cuando auth-service detecta nuevo usuario
- * Requiere autenticación
+ * @openapi
+ * /onboarding/mark:
+ *   post:
+ *     summary: Mark onboarding required
+ *     tags: [Onboarding]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Marked required
  */
 router.post('/mark', asyncHandler(markOnboardingRequired));
 
 /**
- * POST /onboarding/step-1
- * Guarda información del paso 1: carrera, semestre, teléfono
- * Requiere autenticación
- * Body: { career: string, semester: number, phoneNumber: string }
- * Alias: POST /step-one también funciona (para compatibilidad)
+ * @openapi
+ * /onboarding/step-1:
+ *   post:
+ *     summary: Save step 1
+ *     tags: [Onboarding]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               career:
+ *                 type: string
+ *               semester:
+ *                 type: number
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Step 1 saved
+ */
+/**
+ * @openapi
+ * /step-1:
+ *   post:
+ *     summary: POST /step-1
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
  */
 router.post('/step-1', asyncHandler(saveOnboardingStepOne));
+/**
+ * @openapi
+ * /step-one:
+ *   post:
+ *     summary: POST /step-one
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
+ */
 router.post('/step-one', asyncHandler(saveOnboardingStepOne));
 
 /**
- * PATCH /onboarding/step-1/contact
- * Actualiza información de contacto (teléfono) del paso 1
- * Requiere autenticación
- * Body: { phoneNumber: string }
- * Alias: POST /contact también funciona (para compatibilidad)
+ * @openapi
+ * /onboarding/step-1/contact:
+ *   patch:
+ *     summary: Update contact
+ *     tags: [Onboarding]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Contact updated
+ */
+/**
+ * @openapi
+ * /step-1/contact:
+ *   patch:
+ *     summary: PATCH /step-1/contact
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
  */
 router.patch('/step-1/contact', asyncHandler(saveOnboardingContact));
+/**
+ * @openapi
+ * /contact:
+ *   post:
+ *     summary: POST /contact
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
+ */
 router.post('/contact', asyncHandler(saveOnboardingContact));
 
 /**
- * POST /onboarding/complete
- * Marca el onboarding como completado
- * Requiere autenticación
- * Body: { skipped?: boolean }
+ * @openapi
+ * /onboarding/complete:
+ *   post:
+ *     summary: Complete onboarding
+ *     tags: [Onboarding]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Onboarding completed
  */
 router.post('/complete', asyncHandler(completeOnboarding));
 

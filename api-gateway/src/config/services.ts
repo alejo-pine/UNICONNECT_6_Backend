@@ -20,6 +20,9 @@ export const SERVICES = {
   NOTIFICATION_SERVICE: validateUrl(
     process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3005'
   ),
+  CHAT_SERVICE: validateUrl(
+    process.env.CHAT_SERVICE_URL || 'http://localhost:3004'
+  ),
 };
 
 export const SERVICE_ROUTES = {
