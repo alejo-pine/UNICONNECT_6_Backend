@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { initSocketIO } from './realtime/socketManager';
 import notificationRoutes from './routes/notificationRoutes';
 import app from './app';
+import { swaggerSpec } from './config/swagger';
 
 type RequestError = Error & {
   statusCode?: number;
@@ -65,6 +66,11 @@ const configureApp = (): void => {
       service: 'notification-service',
       timestamp: new Date().toISOString(),
     });
+  });
+
+  app.get('/openapi.json', (_req: Request, res: Response): void => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
   });
 
   app.use('/notifications', notificationRoutes);

@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes';
 import app from './app';
 import { Server } from 'http';
 import { initializeJWKS } from './utils/jwksClient';
+import { swaggerSpec } from './config/swagger';
 
 type RequestError = Error & {
   statusCode?: number;
@@ -79,6 +80,12 @@ const configureApp = (): typeof app => {
       service: 'auth-service',
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // OpenAPI endpoint
+  app.get('/openapi.json', (_req: Request, res: Response): void => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
   });
 
   // Auth routes

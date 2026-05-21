@@ -4,6 +4,23 @@ import { SERVICES } from '../config/services';
 
 const router = Router();
 
+// OpenAPI docs proxy endpoints
+router.get('/auth/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE, '/openapi.json');
+});
+router.get('/profiles/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.PROFILE_SERVICE, '/openapi.json');
+});
+router.get('/study-groups/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, '/openapi.json');
+});
+router.get('/notifications/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.NOTIFICATION_SERVICE, '/openapi.json');
+});
+router.get('/chat/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.CHAT_SERVICE, '/openapi.json');
+});
+
 const proxyRequest = async (
   req: Request,
   res: Response,

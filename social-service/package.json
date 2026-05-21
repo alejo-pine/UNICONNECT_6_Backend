@@ -8,7 +8,8 @@
     "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=\"unit|study-groups\"",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=integration",
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "npm run build:openapi && tsc",
+    "build:openapi": "tsx src/scripts/generate-openapi.ts",
     "start": "node dist/server.js",
     "lint": "eslint src/**/*.ts"
   },
@@ -30,13 +31,17 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
     "@types/supertest": "^6.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "jest": "^30.3.0",
     "nodemon": "^3.1.11",
     "supertest": "^7.2.2",
