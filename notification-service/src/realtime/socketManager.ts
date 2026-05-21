@@ -5,7 +5,7 @@ import { eventLogger } from '../utils/eventLogger';
 
 let io: SocketIOServer | null = null;
 
-export const initSocketIO = (httpServer: HttpServer, corsOrigins: string[]): SocketIOServer => {
+export const initSocketIO = (httpServer: HttpServer, _corsOrigins: string[]): SocketIOServer => {
   io = new SocketIOServer(httpServer, {
     path: '/notifications-socket/',
     cors: {
