@@ -1,7 +1,7 @@
 import { eventLogger } from '../../../utils/eventLogger';
 import { ServiceResult } from '../dto/serviceResult';
 import { ProfileRepositoryPort } from '../../domain/ports/profileRepositoryPort';
-import { BaseProfileComponent, ProfileWithStatistics, ProfileWithBadges } from '../../domain/entities/profileDecorator';
+import { BaseProfileComponent, ProfileWithStatistics, ProfileWithBadges, IProfileComponent } from '../../domain/entities/profileDecorator';
 
 export class GetProfileByIdUseCase {
   constructor(private readonly profileRepository: ProfileRepositoryPort) {}
@@ -25,7 +25,7 @@ export class GetProfileByIdUseCase {
         subjects
       };
 
-      let profileComponent = new BaseProfileComponent(baseProfileData);
+      let profileComponent: IProfileComponent = new BaseProfileComponent(baseProfileData);
 
       if (vista === 'completa') {
         const stats = await this.profileRepository.getProfileStatistics(id);

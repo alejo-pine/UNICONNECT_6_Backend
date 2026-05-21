@@ -1,4 +1,4 @@
-import { ServiceResult } from '../../dto/serviceResult';
+import { ServiceResult } from '../../../shared/application/serviceResult';
 import { 
   SaveResourceHandler, 
   AuditDecorator, 

@@ -12,10 +12,6 @@ import { PollController } from './controllers/PollController';
 import { logger } from '../../shared/logger';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export function createExpressApp(
   conversationController: ConversationController,
@@ -46,7 +42,13 @@ export function createExpressApp(
 
   app.get('/openapi.json', (_req, res) => {
     try {
-      const docsPath = path.resolve(__dirname, '../../../docs/openapi.json');
+      let docsPath = path.resolve(process.cwd(), 'docs', 'openapi.json');
+      if (!fs.existsSync(docsPath)) {
+        docsPath = path.resolve(process.cwd(), 'chat-service', 'docs', 'openapi.json');
+      }
+      if (!fs.existsSync(docsPath)) {
+        docsPath = path.resolve(process.cwd(), 'UNICONNECT_6_Backend', 'chat-service', 'docs', 'openapi.json');
+      }
       if (fs.existsSync(docsPath)) {
         const spec = JSON.parse(fs.readFileSync(docsPath, 'utf8'));
         res.setHeader('Content-Type', 'application/json');
@@ -55,7 +57,7 @@ export function createExpressApp(
         res.status(404).json({ error: 'OpenAPI spec not found. Did you run build:openapi?' });
       }
     } catch (error) {
-      logger.error('Error reading openapi.json:', error);
+      logger.error('Error reading openapi.json:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });

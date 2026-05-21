@@ -12,10 +12,6 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // ============================================================================
 // MIDDLEWARE
@@ -37,7 +33,13 @@ app.get('/health', (req, res) => {
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/openapi.json', (req, res) => {
   try {
-    const docsPath = path.resolve(__dirname, '../docs/openapi.json');
+    let docsPath = path.resolve(process.cwd(), 'docs', 'openapi.json');
+    if (!fs.existsSync(docsPath)) {
+      docsPath = path.resolve(process.cwd(), 'social-service', 'docs', 'openapi.json');
+    }
+    if (!fs.existsSync(docsPath)) {
+      docsPath = path.resolve(process.cwd(), 'UNICONNECT_6_Backend', 'social-service', 'docs', 'openapi.json');
+    }
     if (fs.existsSync(docsPath)) {
       const spec = JSON.parse(fs.readFileSync(docsPath, 'utf8'));
       res.setHeader('Content-Type', 'application/json');

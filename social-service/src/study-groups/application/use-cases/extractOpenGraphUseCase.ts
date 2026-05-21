@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { ServiceResult } from '../dto/serviceResult';
+import { ServiceResult } from '../../../shared/application/serviceResult';
 
 export interface OpenGraphData {
   title?: string;
