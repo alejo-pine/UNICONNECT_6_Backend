@@ -59,6 +59,7 @@ export class SupabaseAuthRepository implements AuthRepositoryPort {
         auth0_id: auth0Id,
         email,
         name,
+        onboarding_required: true,
       })
       .select(PROFILE_FIELDS)
       .single();
