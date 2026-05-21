@@ -253,3 +253,104 @@ Health check: `GET https://uniconnect-notification-service.fly.dev/health`
 | `NUEVO_MENSAJE` | Nuevo mensaje en un chat |
 | `EVENTO_GRUPO` | Evento en un grupo |
 | `SISTEMA` | Notificación del sistema |
+
+---
+
+## US-D03 — Patrón Decorator: Notificaciones con prioridad y acción
+
+### Descripción
+
+El patrón **Decorator** permite añadir metadatos a una notificación (prioridad, acción call-to-action) de forma composable y sin modificar la clase base.
+
+### Módulo
+
+```
+src/domain/decorator/
+├── INotificacion.ts           # Interfaz: getMensaje, getDestinatario, getTimestamp, getMetadata
+├── NotificacionBase.ts        # Implementación base con los cuatro campos
+├── NotificacionDecorador.ts   # Decorador abstracto — delega todos los métodos al wrapped
+├── NotificacionConPrioridad.ts # Añade nivel: 'normal' | 'urgente' | 'critica'
+├── NotificacionConAccion.ts   # Añade accion: { label, endpoint }
+└── index.ts                   # Barrel export del módulo
+```
+
+### Diagrama UML
+
+```mermaid
+classDiagram
+  class INotificacion {
+    <<interface>>
+    +getMensaje() string
+    +getDestinatario() string
+    +getTimestamp() Date
+    +getMetadata() Record
+  }
+
+  class NotificacionBase {
+    -mensaje: string
+    -destinatario: string
+    -timestamp: Date
+    +getMensaje() string
+    +getDestinatario() string
+    +getTimestamp() Date
+    +getMetadata() Record
+  }
+
+  class NotificacionDecorador {
+    <<abstract>>
+    #wrapped: INotificacion
+    +getMensaje() string
+    +getDestinatario() string
+    +getTimestamp() Date
+    +getMetadata() Record
+  }
+
+  class NotificacionConPrioridad {
+    -nivel: NivelPrioridad
+    +getMetadata() Record
+  }
+
+  class NotificacionConAccion {
+    -accion: AccionNotificacion
+    +getMetadata() Record
+  }
+
+  INotificacion <|.. NotificacionBase : implements
+  INotificacion <|.. NotificacionDecorador : implements
+  NotificacionDecorador <|-- NotificacionConPrioridad : extends
+  NotificacionDecorador <|-- NotificacionConAccion : extends
+  NotificacionDecorador o-- INotificacion : wraps
+```
+
+### Uso — composición encadenada
+
+```typescript
+import {
+  NotificacionBase,
+  NotificacionConPrioridad,
+  NotificacionConAccion,
+} from './domain/decorator';
+
+const notif = new NotificacionConAccion(
+  new NotificacionConPrioridad(
+    new NotificacionBase(
+      'Tu solicitud fue aceptada',
+      'user-abc-123',
+    ),
+    'urgente',
+  ),
+  { label: 'Aceptar solicitud', endpoint: '/grupos/456/miembros/aceptar' },
+);
+
+notif.getMensaje();     // 'Tu solicitud fue aceptada'
+notif.getDestinatario(); // 'user-abc-123'
+notif.getMetadata();
+// { prioridad: 'urgente', accion: { label: 'Aceptar solicitud', endpoint: '...' } }
+```
+
+### Tests
+
+```bash
+npm test
+# → tests/unit/decorator/notificacionDecorador.test.ts (8 casos)
+```
