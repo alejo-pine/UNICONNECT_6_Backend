@@ -53,6 +53,8 @@ const makeRepository = (
   clearPendingAdminTransfer: async () => undefined,
   acceptAdminTransfer: async () => undefined,
   countBySubject: async () => 0,
+  countCreatedGroups: async () => 0,
+  countJoinedGroups: async () => 0,
   ...overrides,
 });
 
