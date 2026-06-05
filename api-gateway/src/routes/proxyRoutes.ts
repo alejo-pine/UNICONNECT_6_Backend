@@ -248,6 +248,24 @@ router.all('/api/study-groups/*', async (req: Request, res: Response) => {
   await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
 });
 
+router.all('/forum', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE);
+});
+
+router.all('/forum/*', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE);
+});
+
+router.all('/api/forum', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
+});
+
+router.all('/api/forum/*', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
+});
+
 router.all('/notifications', async (req: Request, res: Response) => {
   await proxyRequest(req, res, SERVICES.NOTIFICATION_SERVICE);
 });
