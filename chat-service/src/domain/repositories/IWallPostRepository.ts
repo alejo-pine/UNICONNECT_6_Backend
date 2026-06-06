@@ -26,4 +26,9 @@ export interface IWallPostRepository {
    * Used to verify group membership when fetching attachment signed URLs.
    */
   findGroupIdByPostId(postId: string): Promise<string | null>;
+
+  /**
+   * Counts the number of wall posts sent by a user since a given date.
+   */
+  countRecentPosts(senderId: string, since: Date): Promise<number>;
 }

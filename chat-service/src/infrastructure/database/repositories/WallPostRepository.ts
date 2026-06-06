@@ -260,4 +260,19 @@ export class WallPostRepository implements IWallPostRepository {
     if (!data) return null;
     return (data as { group_id: string }).group_id;
   }
+
+  async countRecentPosts(senderId: string, since: Date): Promise<number> {
+    const { count, error } = await this.supabase
+      .from('wall_post')
+      .select('id', { count: 'exact', head: true })
+      .eq('sender_id', senderId)
+      .gte('created_at', since.toISOString());
+
+    if (error) {
+      logger.error('Error counting recent posts', { senderId, error: error.message });
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    return count ?? 0;
+  }
 }

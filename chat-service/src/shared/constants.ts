@@ -49,6 +49,53 @@ export const ALLOWED_MIME_TYPES: readonly string[] = [
 
 export const MAX_FILE_SIZE_BYTES = 20_971_520; // 20 MB
 
+export const MODERATION_CONFIG = {
+  MAX_MESSAGE_LENGTH: 1000,
+  SPAM_TIME_WINDOW_SECONDS: 30,
+  SPAM_MAX_MESSAGES: 5,
+  SPAM_BLOCK_DURATION_SECONDS: 300, // 5 minutes
+  URL_REGEX: /(https?:\/\/[^\s]+)/g,
+  DEFAULT_FORBIDDEN_WORDS: [
+  'puta',
+  'puto',
+  'mierda',
+  'jueputa',
+  'hijueputa',
+  'hp',
+  'gonorrea',
+  'marica',
+  'maricón',
+  'pendejo',
+  'idiota',
+  'imbécil',
+  'estúpido',
+  'estupido',
+  'cabrón',
+  'culo',
+  'verga',
+  'carajo',
+  'mamón',
+  'zorra',
+  'perra',
+  'malparido',
+  'malparida',
+  'carechimba',
+  'chimba',
+  'hpta',
+  'pirobo',
+  'piroba',
+  'cagada',
+  'mierdero',
+  'tarado',
+  'retardado',
+  'bastardo',
+  'cabrona',
+  'huevón',
+  'huevon',
+  'guevón',
+  'guevon']
+} as const;
+
 export const SIGNED_URL_EXPIRY_SECONDS = 3600; // 1 hour
 
 export const DEFAULT_PAGE_LIMIT = 20;

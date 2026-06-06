@@ -221,4 +221,19 @@ export class MessageRepository implements IMessageRepository {
 
     return count ?? 0;
   }
+
+  async countRecentMessages(senderId: string, since: Date): Promise<number> {
+    const { count, error } = await this.supabase
+      .from('direct_message')
+      .select('id', { count: 'exact', head: true })
+      .eq('sender_id', senderId)
+      .gte('created_at', since.toISOString());
+
+    if (error) {
+      logger.error('Error counting recent messages', { senderId, error: error.message });
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    return count ?? 0;
+  }
 }
