@@ -54,7 +54,7 @@ export const MODERATION_CONFIG = {
   SPAM_TIME_WINDOW_SECONDS: 30,
   SPAM_MAX_MESSAGES: 5,
   SPAM_BLOCK_DURATION_SECONDS: 300, // 5 minutes
-  URL_REGEX: /(https?:\/\/[^\s]+)/g,
+  URL_REGEX_SOURCE: '(https?:\\/\\/[^\\s]+)|(www\\.[^\\s]+)|([a-zA-Z0-9-]+\\.(com|org|net|edu|gov|io|co|us)(\\/[^\\s]*)?)',
   DEFAULT_FORBIDDEN_WORDS: [
   'puta',
   'puto',

@@ -9,7 +9,7 @@ export class EnlacesExternosHandler extends ValidadorMensajeBase {
       return { valido: true };
     }
 
-    const regex = new RegExp(MODERATION_CONFIG.URL_REGEX);
+    const regex = new RegExp(MODERATION_CONFIG.URL_REGEX_SOURCE, 'i');
     if (regex.test(contexto.content)) {
       return {
         valido: false,
