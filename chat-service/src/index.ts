@@ -82,9 +82,9 @@ function bootstrap(): void {
   const findOrCreateConversation = new FindOrCreateConversationUseCase(conversationRepo);
   const getConversation = new GetConversationUseCase(conversationRepo);
   const listMessages = new ListMessagesUseCase(conversationRepo, messageRepo);
-  const sendMessage = new SendMessageUseCase(messageRepo, validationChainFactory);
+  const sendMessage = new SendMessageUseCase(messageRepo, validationChainFactory, moderationRepo);
   const listWallPosts = new ListWallPostsUseCase(wallPostRepo, groupRepo);
-  const createWallPost = new CreateWallPostUseCase(wallPostRepo, validationChainFactory);
+  const createWallPost = new CreateWallPostUseCase(wallPostRepo, validationChainFactory, moderationRepo);
   const listWallInbox = new ListWallInboxUseCase(groupRepo);
   const getDmAttachmentUrl = new GetDmAttachmentUrlUseCase(messageRepo, conversationRepo, storageRepo);
   const getWallAttachmentUrl = new GetWallAttachmentUrlUseCase(wallPostRepo, groupRepo, storageRepo);

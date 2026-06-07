@@ -15,13 +15,13 @@ export class SpamHandler extends ValidadorMensajeBase {
   }
 
   protected async validar(contexto: ValidationContext): Promise<ResultadoValidacion> {
-    // 1. Verificamos si ya está bloqueado
-    const estaBloqueado = await this.moderationRepo.estaBloqueado(contexto.senderId);
-    if (estaBloqueado) {
+    // 1. Verificamos si ya está bloqueado por CUALQUIER motivo
+    const bloqueoActivo = await this.moderationRepo.estaBloqueado(contexto.senderId);
+    if (bloqueoActivo) {
       return {
         valido: false,
-        codigoError: 'MO_003',
-        detalle: 'Demasiados mensajes en poco tiempo. Estás bloqueado temporalmente.',
+        codigoError: bloqueoActivo.codigo,
+        detalle: `${bloqueoActivo.motivo} (Aún tienes un bloqueo temporal activo)`,
       };
     }
 
@@ -42,6 +42,7 @@ export class SpamHandler extends ValidadorMensajeBase {
         valido: false,
         codigoError: 'MO_003',
         detalle: 'Demasiados mensajes en poco tiempo',
+        nuevoBloqueo: true,
       };
     }
 

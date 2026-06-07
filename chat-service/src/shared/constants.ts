@@ -100,3 +100,10 @@ export const SIGNED_URL_EXPIRY_SECONDS = 3600; // 1 hour
 
 export const DEFAULT_PAGE_LIMIT = 20;
 export const MAX_PAGE_LIMIT = 100;
+
+export const MODERATION_RULES_EXPLANATIONS: Record<string, string> = {
+  MO_001: 'Tu mensaje excede la longitud máxima permitida en la comunidad. Por favor, sé más conciso.',
+  MO_002: 'Tu mensaje contiene lenguaje o contenido que no está permitido según nuestras normas de convivencia.',
+  MO_003: 'Estás enviando demasiados mensajes en muy poco tiempo. Por favor, respeta el ritmo de la conversación.',
+  MO_004: 'No se permite compartir enlaces externos para proteger la seguridad de los usuarios en la plataforma.',
+};

@@ -39,7 +39,7 @@ export class ValidationChainFactory {
     );
 
     const longitud = new LongitudHandler();
-    const palabras = new PalabrasProhibidasHandler([...MODERATION_CONFIG.DEFAULT_FORBIDDEN_WORDS]);
+    const palabras = new PalabrasProhibidasHandler([...MODERATION_CONFIG.DEFAULT_FORBIDDEN_WORDS], this.moderationRepo);
     const spam = new SpamHandler(
       (senderId, since) => this.messageRepo.countRecentMessages(senderId, since),
       this.moderationRepo
@@ -81,7 +81,7 @@ export class ValidationChainFactory {
     );
 
     const longitud = new LongitudHandler();
-    const palabras = new PalabrasProhibidasHandler([...MODERATION_CONFIG.DEFAULT_FORBIDDEN_WORDS]);
+    const palabras = new PalabrasProhibidasHandler([...MODERATION_CONFIG.DEFAULT_FORBIDDEN_WORDS], this.moderationRepo);
     const spam = new SpamHandler(
       (senderId, since) => this.wallPostRepo.countRecentPosts(senderId, since),
       this.moderationRepo

@@ -13,6 +13,19 @@ export interface IModerationRepository {
   /**
    * Verifica si el usuario tiene un bloqueo activo en este momento.
    * @param userId El ID del usuario a verificar.
+   * @returns El código y motivo del bloqueo si existe, o null.
    */
-  estaBloqueado(userId: string): Promise<boolean>;
+  estaBloqueado(userId: string): Promise<{ codigo: string; motivo: string } | null>;
+
+  /**
+   * Cuenta cuántos bloqueos ha recibido un usuario desde una fecha específica.
+   * @param userId El ID del usuario.
+   * @param since La fecha desde la cual contar.
+   */
+  contarBloqueosRecientes(userId: string, since: Date): Promise<number>;
+
+  /**
+   * Obtiene el ID del usuario con rol super_admin.
+   */
+  getSuperAdminId(): Promise<string | null>;
 }

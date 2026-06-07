@@ -28,22 +28,56 @@ export class SupabaseModerationRepository implements IModerationRepository {
     }
   }
 
-  async estaBloqueado(userId: string): Promise<boolean> {
+  async estaBloqueado(userId: string): Promise<{ codigo: string; motivo: string } | null> {
     const now = new Date().toISOString();
 
     const { data, error } = await this.supabase
       .from('moderation_history')
-      .select('id')
+      .select('rejection_code, reason')
       .eq('user_id', userId)
       .gt('blocked_until', now)
+      .order('blocked_until', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (error) {
       logger.error('Error verificando estado de bloqueo', { userId, error: error.message });
-      return false; // Fail open to avoid blocking valid users if DB fails
+      return null; // Fail open to avoid blocking valid users if DB fails
     }
 
-    return data !== null;
+    if (!data) return null;
+
+    return { codigo: data.rejection_code, motivo: data.reason };
+  }
+
+  async contarBloqueosRecientes(userId: string, since: Date): Promise<number> {
+    const { count, error } = await this.supabase
+      .from('moderation_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', since.toISOString());
+
+    if (error) {
+      logger.error('Error contando bloqueos recientes', { userId, error: error.message });
+      return 0;
+    }
+
+    return count ?? 0;
+  }
+
+  async getSuperAdminId(): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from('profile')
+      .select('id')
+      .eq('role', 'super_admin')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      logger.error('Error obteniendo ID del super admin', { error: error.message });
+      return null;
+    }
+
+    return data?.id ?? null;
   }
 }
