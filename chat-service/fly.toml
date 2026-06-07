@@ -3,6 +3,8 @@ primary_region = "dfw"
 
 [build]
 
+[env]
+  NOTIFICATION_SERVICE_URL = "https://uniconnect-api-gateway.fly.dev/api/notifications"
 [[vm]]
   memory = "512mb"
   cpu_kind = "shared"
