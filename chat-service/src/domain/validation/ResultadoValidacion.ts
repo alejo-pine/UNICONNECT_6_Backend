@@ -4,4 +4,6 @@ export interface ResultadoValidacion {
   codigoError?: string;
 
   detalle?: string;
+
+  nuevoBloqueo?: boolean;
 }

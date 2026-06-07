@@ -2,6 +2,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/AppError';
+import { ModerationError } from '../errors/ModerationError';
 import { logger } from '../logger';
 
 export function errorHandler(
@@ -11,6 +12,25 @@ export function errorHandler(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): void {
+  if (err instanceof ModerationError) {
+    logger.warn('Moderation error', {
+      code: err.code,
+      moderationCode: err.moderationCode,
+      message: err.message,
+      escalated: err.escalated,
+      path: req.path,
+    });
+
+    res.status(err.statusCode).json({
+      code: err.code,
+      message: err.message,
+      moderationCode: err.moderationCode,
+      escalated: err.escalated,
+      ruleExplanation: err.ruleExplanation,
+    });
+    return;
+  }
+
   if (err instanceof AppError) {
     if (!err.isOperational) {
       logger.error('Non-operational AppError', {

@@ -13,6 +13,7 @@ import { MessageRepository } from './infrastructure/database/repositories/Messag
 import { WallPostRepository } from './infrastructure/database/repositories/WallPostRepository';
 import { GroupRepository } from './infrastructure/database/repositories/GroupRepository';
 import { StorageRepository } from './infrastructure/database/repositories/StorageRepository';
+import { SupabaseModerationRepository } from './infrastructure/database/repositories/SupabaseModerationRepository';
 
 // ── Application: Use cases ───────────────────────────────────────────────────
 import { ListConversationsUseCase } from './application/use-cases/ListConversationsUseCase';
@@ -64,19 +65,26 @@ function bootstrap(): void {
   const groupRepo = new GroupRepository(supabase);
   const storageRepo = new StorageRepository(supabase);
   const pollRepo = new PollRepository(supabase);
+  const moderationRepo = new SupabaseModerationRepository(supabase);
 
   // ── 3. Factory: Chain of Responsibility (compone las cadenas de validación) ──
   // Único punto donde se ensamblan y se inyectan los repositorios a la cadena.
-  const validationChainFactory = new ValidationChainFactory(conversationRepo, groupRepo);
+  const validationChainFactory = new ValidationChainFactory(
+    conversationRepo,
+    groupRepo,
+    messageRepo,
+    wallPostRepo,
+    moderationRepo
+  );
 
   // ── 4. Use cases (injected with repository interfaces) ─────────────────────
   const listConversations = new ListConversationsUseCase(conversationRepo);
   const findOrCreateConversation = new FindOrCreateConversationUseCase(conversationRepo);
   const getConversation = new GetConversationUseCase(conversationRepo);
   const listMessages = new ListMessagesUseCase(conversationRepo, messageRepo);
-  const sendMessage = new SendMessageUseCase(messageRepo, validationChainFactory);
+  const sendMessage = new SendMessageUseCase(messageRepo, validationChainFactory, moderationRepo);
   const listWallPosts = new ListWallPostsUseCase(wallPostRepo, groupRepo);
-  const createWallPost = new CreateWallPostUseCase(wallPostRepo, validationChainFactory);
+  const createWallPost = new CreateWallPostUseCase(wallPostRepo, validationChainFactory, moderationRepo);
   const listWallInbox = new ListWallInboxUseCase(groupRepo);
   const getDmAttachmentUrl = new GetDmAttachmentUrlUseCase(messageRepo, conversationRepo, storageRepo);
   const getWallAttachmentUrl = new GetWallAttachmentUrlUseCase(wallPostRepo, groupRepo, storageRepo);
