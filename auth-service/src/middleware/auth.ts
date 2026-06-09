@@ -19,7 +19,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction): void =
       return;
     }
 
-    (req as AuthenticatedRequest).user = { id: claims.sub, email: claims.email };
+    (req as AuthenticatedRequest).user = { id: claims.sub, email: claims.email, role: claims.role };
 
     next();
   } catch (error: unknown) {
