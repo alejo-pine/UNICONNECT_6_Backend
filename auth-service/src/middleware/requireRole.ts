@@ -57,11 +57,20 @@ export const requireRole =
       });
 
       res.status(403).json({
-        error: `Acceso restringido: se requiere rol '${requiredRole}'`,
+        error: `Acceso restringido a ${requiredRole}`,
         statusCode: 403,
       });
       return;
     }
+
+    // Log de auditoría: éxito
+    eventLogger.info('requireRole', 'Acceso permitido a ruta administrativa', {
+      userId: user.id,
+      role: user.role,
+      path: req.path,
+      method: req.method,
+      timestamp: new Date().toISOString(),
+    });
 
     next();
   };

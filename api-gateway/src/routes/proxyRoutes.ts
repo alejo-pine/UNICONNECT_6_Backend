@@ -104,6 +104,25 @@ router.all('/api/auth/*', async (req: Request, res: Response) => {
   await proxyRequest(req, res, SERVICES.AUTH_SERVICE, pathWithoutApi);
 });
 
+// Admin proxy routes -> Directed to auth-service where admin routes live
+router.all('/admin', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE);
+});
+
+router.all('/admin/*', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE);
+});
+
+router.all('/api/admin', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE, pathWithoutApi);
+});
+
+router.all('/api/admin/*', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE, pathWithoutApi);
+});
+
 router.all('/profiles', async (req: Request, res: Response) => {
   await proxyRequest(req, res, SERVICES.PROFILE_SERVICE);
 });

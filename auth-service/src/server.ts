@@ -4,6 +4,7 @@ import cors, { CorsOptions } from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/authRoutes';
+import adminRoutes from './routes/adminRoutes';
 import app from './app';
 import { Server } from 'http';
 import { initializeJWKS } from './utils/jwksClient';
@@ -90,6 +91,9 @@ const configureApp = (): typeof app => {
 
   // Auth routes
   app.use('/auth', authRoutes);
+
+  // Admin routes — protected by authMiddleware + requireRole('super_admin') (US-EV01)
+  app.use('/admin', adminRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response): void => {
