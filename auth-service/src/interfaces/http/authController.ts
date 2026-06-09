@@ -33,6 +33,7 @@ const emitSessionToken = (profile: SyncedAuthProfile): string => {
       auth0_id: profile.auth0_id,
       email: profile.email,
       name: profile.name,
+      role: profile.role,
       iat: nowSeconds,
       type: 'session',
     },

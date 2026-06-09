@@ -6,9 +6,45 @@ export interface VerifiedAccessTokenClaims {
   sub: string;
   email: string;
   name?: string;
+  /** Rol de aplicación del usuario (ej. 'super_admin'). Leído desde el JWT, nunca desde BD. */
+  role?: string;
   iss?: string;
   aud?: string | string[];
 }
+
+/**
+ * Extrae el rol de aplicación del payload JWT.
+ *
+ * Estrategia de lectura (orden de prioridad):
+ *  1. `app_metadata.role` — claim personalizado configurado vía Supabase Admin API.
+ *     Es la forma canónica de asignar roles de aplicación en Supabase.
+ *  2. Campo `role` de nivel raíz — usado en tokens HS256 custom (uniconnect-backend).
+ *     Se excluyen los roles internos de Supabase ('authenticated', 'anon').
+ *
+ * No realiza ninguna consulta a base de datos.
+ */
+export const extractAppRole = (payload: JwtPayload): string | undefined => {
+  // 1. Supabase app_metadata.role (set via Admin API / triggers)
+  if (typeof payload['app_metadata'] === 'object' && payload['app_metadata'] !== null) {
+    const appMeta = payload['app_metadata'] as Record<string, unknown>;
+    if (typeof appMeta['role'] === 'string' && appMeta['role'].length > 0) {
+      return appMeta['role'];
+    }
+  }
+
+  // 2. Top-level role claim for custom uniconnect-backend HS256 tokens.
+  // Supabase built-in roles ('authenticated', 'anon') are explicitly excluded.
+  const SUPABASE_INTERNAL_ROLES = new Set(['authenticated', 'anon']);
+  if (
+    typeof payload['role'] === 'string' &&
+    payload['role'].length > 0 &&
+    !SUPABASE_INTERNAL_ROLES.has(payload['role'])
+  ) {
+    return payload['role'];
+  }
+
+  return undefined;
+};
 
 export class AuthError extends Error {
   readonly statusCode: number;
@@ -53,6 +89,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
       const sub = typeof payload.sub === 'string' ? payload.sub : undefined;
       const email = typeof payload.email === 'string' ? payload.email : undefined;
       const name = typeof payload.name === 'string' ? payload.name : undefined;
+      const role = extractAppRole(payload);
 
       if (!sub || !email) {
         throw new AuthError(401, 'Token invalido');
@@ -62,6 +99,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
         sub,
         email,
         name,
+        role,
         iss: typeof payload.iss === 'string' ? payload.iss : undefined,
         aud: payload.aud,
       };
@@ -96,6 +134,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
     const sub = typeof payload.sub === 'string' ? payload.sub : undefined;
     const email = typeof payload.email === 'string' ? payload.email : undefined;
     const name = typeof payload.name === 'string' ? payload.name : undefined;
+    const role = extractAppRole(payload);
 
     if (!sub || !email) {
       throw new AuthError(401, 'Token invalido');
@@ -105,6 +144,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
       sub,
       email,
       name,
+      role,
       iss: typeof payload.iss === 'string' ? payload.iss : undefined,
       aud: payload.aud,
     };
