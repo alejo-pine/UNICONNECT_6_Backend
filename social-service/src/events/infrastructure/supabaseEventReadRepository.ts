@@ -6,20 +6,41 @@ import { EventReadRepositoryPort, FindAllEventsOptions } from '../domain/ports/e
 const TABLE = 'event';
 
 export class SupabaseEventReadRepository implements EventReadRepositoryPort {
-  async findAll(options: FindAllEventsOptions = {}): Promise<EventCardSummary[]> {
-    const { limit = 20 } = options;
+  async findAll(options: FindAllEventsOptions = {}): Promise<PaginatedResult<EventCardSummary>> {
+    const { limit = 10, page = 1, categories, search } = options;
     const db = eventDatabaseHandler.getClient();
 
-    const { data, error } = await db
+    let query = db
       .from(TABLE)
-      .select('id, title, description, image_url, faculty, event_date, event_time, capacity, available_spots')
+      .select('id, title, description, image_url, faculty, event_date, event_time, capacity, available_spots', { count: 'exact' });
+
+    // Excluir eventos pasados
+    const today = new Date().toISOString().split('T')[0];
+    query = query.gte('event_date', today);
+
+    if (categories && categories.length > 0) {
+      query = query.in('category', categories);
+    }
+
+    if (search && search.length >= 3) {
+      // Supabase ILIKE search en título y descripción
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+
+    // Paginación
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    query = query
       .order('event_date', { ascending: true })
       .order('event_time', { ascending: true })
-      .limit(limit);
+      .range(from, to);
+
+    const { data, count, error } = await query;
 
     if (error) {
       eventLogger.error('SupabaseEventReadRepository.findAll', 'Supabase query failed', {
-        limit,
+        options,
         error: error.message,
       });
       throw new Error(error.message);
@@ -37,7 +58,7 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       available_spots: number;
     }>;
 
-    return rows.map((row) => ({
+    const mappedData = rows.map((row) => ({
       id: row.id,
       title: row.title,
       description: row.description,
@@ -48,6 +69,11 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       capacity: row.capacity,
       availableSpots: row.available_spots,
     }));
+
+    return {
+      data: mappedData,
+      total: count ?? 0,
+    };
   }
 
   async findById(id: string, userId?: string): Promise<EventDetail | null> {

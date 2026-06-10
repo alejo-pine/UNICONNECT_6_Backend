@@ -6,15 +6,30 @@ import { AuthenticatedRequest } from '../../../shared/http/authenticatedRequest'
 
 export const getEvents = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const limitRaw = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : undefined;
-  const limit = limitRaw !== undefined && !isNaN(limitRaw) ? limitRaw : 20;
+  const limit = limitRaw !== undefined && !isNaN(limitRaw) ? limitRaw : 10; // Default a 10 por la historia de usuario
 
-  const result = await eventDependencies.getAllEventsUseCase.execute({ limit });
+  const pageRaw = typeof req.query.page === 'string' ? parseInt(req.query.page, 10) : undefined;
+  const page = pageRaw !== undefined && !isNaN(pageRaw) ? pageRaw : 1;
+
+  const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+  
+  let categories: string[] | undefined = undefined;
+  if (typeof req.query.categories === 'string') {
+    categories = req.query.categories.split(',').map(c => c.trim()).filter(c => c.length > 0);
+  } else if (Array.isArray(req.query.categories)) {
+    categories = req.query.categories.map(c => String(c));
+  }
+
+  const result = await eventDependencies.getAllEventsUseCase.execute({ limit, page, search, categories });
 
   sendServiceResult(
     res,
     {
       ...result,
-      data: result.data ? toEventCardSummaryApiResponseList(result.data) : null,
+      data: result.data ? {
+        data: toEventCardSummaryApiResponseList(result.data.data),
+        total: result.data.total
+      } : null,
     },
     200
   );
