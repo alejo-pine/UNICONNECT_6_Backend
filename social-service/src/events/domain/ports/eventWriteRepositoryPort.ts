@@ -12,4 +12,6 @@ export interface CreateEventDto {
 
 export interface EventWriteRepositoryPort {
   create(dto: CreateEventDto): Promise<string>;
+  registerUser(eventId: string, profileId: string, expectedVersion: number): Promise<void>;
+  cancelRegistration(eventId: string, profileId: string): Promise<void>;
 }

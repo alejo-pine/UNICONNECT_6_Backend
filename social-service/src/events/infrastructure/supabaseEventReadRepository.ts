@@ -12,7 +12,7 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
 
     const { data, error } = await db
       .from(TABLE)
-      .select('id, title, description, image_url, faculty, event_date, event_time')
+      .select('id, title, description, image_url, faculty, event_date, event_time, capacity, available_spots')
       .order('event_date', { ascending: true })
       .order('event_time', { ascending: true })
       .limit(limit);
@@ -33,6 +33,8 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       faculty: string | null;
       event_date: string;
       event_time: string;
+      capacity: number;
+      available_spots: number;
     }>;
 
     return rows.map((row) => ({
@@ -43,16 +45,18 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       faculty: row.faculty,
       eventDate: row.event_date,
       eventTime: row.event_time,
+      capacity: row.capacity,
+      availableSpots: row.available_spots,
     }));
   }
 
-  async findById(id: string): Promise<EventDetail | null> {
+  async findById(id: string, userId?: string): Promise<EventDetail | null> {
     const db = eventDatabaseHandler.getClient();
 
     const { data, error } = await db
       .from(TABLE)
       .select(
-        'id, profile_id, title, description, image_url, event_date, event_time, location, category, faculty, created_at, profile:profile_id(name)'
+        'id, profile_id, title, description, image_url, event_date, event_time, location, category, faculty, created_at, capacity, available_spots, version, profile:profile_id(name)'
       )
       .eq('id', id)
       .single();
@@ -70,6 +74,20 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       throw new Error(error.message);
     }
 
+    let isRegistered = false;
+    if (userId) {
+      const { data: userReg, error: userRegErr } = await db
+        .from('evento_usuario')
+        .select('id')
+        .eq('event_id', id)
+        .eq('profile_id', userId)
+        .maybeSingle();
+      
+      if (!userRegErr && userReg) {
+        isRegistered = true;
+      }
+    }
+
     const row = data as {
       id: string;
       profile_id: string;
@@ -82,6 +100,9 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       category: string | null;
       faculty: string | null;
       created_at: string;
+      capacity: number;
+      available_spots: number;
+      version: number;
       profile?: { name?: string | null } | Array<{ name?: string | null }> | null;
     };
 
@@ -100,6 +121,10 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       faculty: row.faculty,
       createdAt: row.created_at,
       organizerName: profileData?.name ?? null,
+      capacity: row.capacity,
+      availableSpots: row.available_spots,
+      version: row.version,
+      isRegistered,
     };
   }
 }

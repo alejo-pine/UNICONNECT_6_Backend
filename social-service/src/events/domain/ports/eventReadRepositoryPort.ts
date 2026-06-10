@@ -6,5 +6,5 @@ export interface FindAllEventsOptions {
 
 export interface EventReadRepositoryPort {
   findAll(options: FindAllEventsOptions): Promise<EventCardSummary[]>;
-  findById(id: string): Promise<EventDetail | null>;
+  findById(id: string, userId?: string): Promise<EventDetail | null>;
 }

@@ -6,6 +6,8 @@ import { SupabaseEventSubscriptionRepository } from '../../infrastructure/supaba
 import { SubscribeCategoryUseCase } from '../../application/use-cases/subscribeCategoryUseCase';
 import { UnsubscribeCategoryUseCase } from '../../application/use-cases/unsubscribeCategoryUseCase';
 import { CreateEventUseCase } from '../../application/use-cases/createEventUseCase';
+import { RegisterToEventUseCase } from '../../application/use-cases/registerToEventUseCase';
+import { CancelEventRegistrationUseCase } from '../../application/use-cases/cancelEventRegistrationUseCase';
 import { eventoUniversidadSubject } from '../../domain/events/eventoUniversidadSubject';
 import { NotificationServiceObserver } from '../../infrastructure/observers/NotificationServiceObserver';
 
@@ -23,5 +25,7 @@ export const eventDependencies = {
   subscribeCategoryUseCase: new SubscribeCategoryUseCase(eventSubscriptionRepository),
   unsubscribeCategoryUseCase: new UnsubscribeCategoryUseCase(eventSubscriptionRepository),
   createEventUseCase: new CreateEventUseCase(eventWriteRepository, eventoUniversidadSubject),
+  registerToEventUseCase: new RegisterToEventUseCase(eventReadRepository, eventWriteRepository),
+  cancelEventRegistrationUseCase: new CancelEventRegistrationUseCase(eventReadRepository, eventWriteRepository),
   eventSubscriptionRepository,
 };

@@ -25,8 +25,9 @@ export const getEventById = async (
   res: Response
 ): Promise<void> => {
   const id = String(req.params.id);
+  const userId = req.user?.id;
 
-  const result = await eventDependencies.getEventByIdUseCase.execute(id);
+  const result = await eventDependencies.getEventByIdUseCase.execute(id, userId);
 
   sendServiceResult(
     res,
@@ -114,5 +115,41 @@ export const createEvent = async (req: AuthenticatedRequest, res: Response): Pro
     res.status(201).json(result);
   } else {
     res.status(500).json(result);
+  }
+};
+
+export const registerToEvent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user?.id;
+  const eventId = req.params.id;
+
+  if (!userId) {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    await eventDependencies.registerToEventUseCase.execute({ eventId, userId });
+    res.status(200).json({ success: true, message: 'Registro exitoso' });
+  } catch (error: any) {
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ success: false, error: error.message });
+  }
+};
+
+export const cancelRegistration = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user?.id;
+  const eventId = req.params.id;
+
+  if (!userId) {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    await eventDependencies.cancelEventRegistrationUseCase.execute({ eventId, userId });
+    res.status(200).json({ success: true, message: 'Registro cancelado exitosamente' });
+  } catch (error: any) {
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ success: false, error: error.message });
   }
 };

@@ -6,9 +6,9 @@ import { ServiceResult } from '../dto/serviceResult';
 export class GetEventByIdUseCase {
   constructor(private readonly eventRepository: EventReadRepositoryPort) {}
 
-  async execute(id: string): Promise<ServiceResult<EventDetail>> {
+  async execute(id: string, userId?: string): Promise<ServiceResult<EventDetail>> {
     try {
-      const data = await this.eventRepository.findById(id);
+      const data = await this.eventRepository.findById(id, userId);
       if (!data) {
         eventLogger.warn('GetEventByIdUseCase.execute', 'Event not found', { id });
         return { data: null, error: 'Event not found', statusCode: 404 };
