@@ -17,6 +17,7 @@ export const createNotification = async (req: Request, res: Response): Promise<v
     message: body.message,
     type: body.type,
     groupId: body.groupId,
+    emailHtml: body.emailHtml,
   });
 
   sendServiceResult(res, result, 201);

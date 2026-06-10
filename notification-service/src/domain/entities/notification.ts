@@ -16,6 +16,7 @@ export interface Notification {
   groupId?: string;
   read: boolean;
   createdAt: Date;
+  emailHtml?: string;
 }
 
 export interface CreateNotificationInput {
@@ -24,4 +25,5 @@ export interface CreateNotificationInput {
   message: string;
   type: NotificationType;
   groupId?: string;
+  emailHtml?: string;
 }
