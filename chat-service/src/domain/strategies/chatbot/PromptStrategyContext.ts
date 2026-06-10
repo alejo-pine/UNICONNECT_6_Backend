@@ -1,19 +1,30 @@
 import { PromptStrategy } from './PromptStrategy';
 import { EstudiantePromptStrategy } from './EstudiantePromptStrategy';
 import { AdminPromptStrategy } from './AdminPromptStrategy';
+import { RoleNotSupportedError } from './errors/RoleNotSupportedError';
 
 export class PromptStrategyContext {
-  static getStrategy(role: string): PromptStrategy {
-    // Para roles que no sean student o super_admin, fallaremos por defecto a estudiante 
-    // o lanzaremos un error. Según la HU, solo manejamos 'student' y 'super_admin' por ahora.
-    // También es buena idea sanitizar a lowercase por seguridad.
-    const normalizedRole = role.toLowerCase().trim();
+  private static strategies: Map<string, PromptStrategy> = new Map([
+    ['student', new EstudiantePromptStrategy()],
+    ['super_admin', new AdminPromptStrategy()],
+  ]);
 
-    if (normalizedRole === 'super_admin') {
-      return new AdminPromptStrategy();
+  /**
+   * Permite registrar nuevas estrategias dinámicamente sin modificar esta clase,
+   * facilitando la extensibilidad.
+   */
+  static registerStrategy(role: string, strategy: PromptStrategy): void {
+    this.strategies.set(role.toLowerCase().trim(), strategy);
+  }
+
+  static getStrategy(role: string): PromptStrategy {
+    const normalizedRole = role.toLowerCase().trim();
+    const strategy = this.strategies.get(normalizedRole);
+
+    if (!strategy) {
+      throw new RoleNotSupportedError(`La estrategia para el rol '${role}' no está registrada en PromptStrategyContext.`);
     }
 
-    // Default: 'student' (o cualquier otro rol recaerá en las restricciones de estudiante por seguridad)
-    return new EstudiantePromptStrategy();
+    return strategy;
   }
 }

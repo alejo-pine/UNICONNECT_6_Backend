@@ -1,12 +1,14 @@
 import { IProfileReadRepository } from '../../../domain/repositories/IProfileReadRepository';
 import { PromptStrategyContext } from '../../../domain/strategies/chatbot/PromptStrategyContext';
+import { RoleNotSupportedError } from '../../../domain/strategies/chatbot/errors/RoleNotSupportedError';
 import { logger } from '../../../shared/logger';
 
 export interface ChatbotRequestPayload {
   sessionId: string;
   action: string;
   chatInput: string;
-  system_prompt: string;
+  system_prompt: string | null;
+  error?: string;
 }
 
 export class GenerateChatbotResponseUseCase {
@@ -17,26 +19,38 @@ export class GenerateChatbotResponseUseCase {
     const role = await this.profileReadRepository.getUserRole(userId);
     
     if (!role) {
-      logger.warn(`No se pudo obtener el rol para el usuario ${userId}. Se usará el rol por defecto.`);
+      logger.warn(`No se pudo obtener el rol para el usuario ${userId}. Se asume rol desconocido.`);
     }
 
-    // 2. Resolver la estrategia de prompt basada en el rol
-    const strategy = PromptStrategyContext.getStrategy(role || 'student');
-    const systemPrompt = strategy.getSystemPrompt();
+    let systemPrompt: string | null = null;
+    let errorMessage: string | undefined;
+
+    // 2. Resolver la estrategia de prompt basada en el rol, controlando excepciones
+    try {
+      const strategy = PromptStrategyContext.getStrategy(role || 'unknown');
+      systemPrompt = strategy.getSystemPrompt();
+    } catch (error) {
+      if (error instanceof RoleNotSupportedError) {
+        // Logueamos el evento sin quebrar la aplicación
+        logger.error(`Fallo de estrategia en chatbot: ${error.message}`, { userId, role });
+        
+        // Asignamos un mensaje de error que será consumido por la capa de red (HTTP/Socket) 
+        // para dar retroalimentación al usuario sin abortar abruptamente el pipeline.
+        errorMessage = 'Tu rol actual no tiene soporte para usar el chatbot de UniConnect.';
+      } else {
+        // Re-lanzar si es otro tipo de error inesperado
+        throw error;
+      }
+    }
 
     // 3. Preparar el payload exacto para enviar al webhook de n8n
-    const payload: ChatbotRequestPayload = {
+    // Si hay un error, el 'system_prompt' viaja nulo y el 'error' notifica el estado.
+    return {
       sessionId: sessionId,
       action: 'sendMessage',
       chatInput: message,
       system_prompt: systemPrompt,
+      ...(errorMessage ? { error: errorMessage } : {})
     };
-
-    // TODO: En futuras tareas, aquí se realizará la petición HTTP POST (e.g. axios.post)
-    // al webhook de n8n usando process.env.N8N_WEBHOOK_URL enviando el `payload`.
-    // Por ahora, cumplimos con el Criterio de Aceptación devolviendo el payload preparado
-    // de manera que el pipeline RAG reciba el system_prompt sin condicionales de rol.
-
-    return payload;
   }
 }
