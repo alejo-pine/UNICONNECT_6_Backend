@@ -4,6 +4,7 @@ export interface CreateNotificationDto {
   message: string;
   type: string;
   groupId?: string;
+  emailHtml?: string;
 }
 
 export interface NotificationResponseDto {
