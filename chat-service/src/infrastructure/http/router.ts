@@ -7,18 +7,25 @@ import { MessageController } from './controllers/MessageController';
 import { WallPostController } from './controllers/WallPostController';
 import { AttachmentController } from './controllers/AttachmentController';
 import { PollController } from './controllers/PollController';
+import { ChatbotController } from './controllers/ChatbotController';
 
 export function createRouter(
   conversationController: ConversationController,
   messageController: MessageController,
   wallPostController: WallPostController,
   attachmentController: AttachmentController,
-  pollController: PollController
+  pollController: PollController,
+  chatbotController: ChatbotController
 ): Router {
   const router = Router();
 
   // All routes below require x-user-id header
   router.use(extractUserId);
+
+  // ── Chatbot ─────────────────────────────────────────────────────────────────
+  router.post('/chatbot/message', (req, res) => chatbotController.sendMessage(req, res));
+  router.get('/chatbot/conversations', (req, res) => chatbotController.listConversations(req, res));
+  router.get('/chatbot/conversations/:id/messages', (req, res) => chatbotController.getConversationMessages(req, res));
 
   // ── Conversations ────────────────────────────────────────────────────────────
   // GET  /api/conversations
