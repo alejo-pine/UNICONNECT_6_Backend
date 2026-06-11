@@ -9,6 +9,7 @@ import { MessageController } from './controllers/MessageController';
 import { WallPostController } from './controllers/WallPostController';
 import { AttachmentController } from './controllers/AttachmentController';
 import { PollController } from './controllers/PollController';
+import { ChatbotController } from './controllers/ChatbotController';
 import { logger } from '../../shared/logger';
 import fs from 'fs';
 import path from 'path';
@@ -18,7 +19,8 @@ export function createExpressApp(
   messageController: MessageController,
   wallPostController: WallPostController,
   attachmentController: AttachmentController,
-  pollController: PollController
+  pollController: PollController,
+  chatbotController: ChatbotController
 ): Application {
   const app = express();
 
@@ -70,7 +72,8 @@ export function createExpressApp(
       messageController,
       wallPostController,
       attachmentController,
-      pollController
+      pollController,
+      chatbotController
     )
   );
 

@@ -52,6 +52,14 @@ import { PollSocketObserver } from './infrastructure/socket/PollSocketObserver';
 import { PollExpirationScheduler } from './infrastructure/services/PollExpirationScheduler';
 import { createExpressApp } from './infrastructure/http/server';
 
+// ── Chatbot ───────────────────────────────────────────────────────────────────
+import { SupabaseProfileReadRepository } from './infrastructure/database/repositories/SupabaseProfileReadRepository';
+import { SupabaseChatbotRepository } from './infrastructure/database/repositories/SupabaseChatbotRepository';
+import { GenerateChatbotResponseUseCase } from './application/use-cases/chatbot/GenerateChatbotResponseUseCase';
+import { ListChatbotConversationsUseCase } from './application/use-cases/chatbot/ListChatbotConversationsUseCase';
+import { GetChatbotConversationMessagesUseCase } from './application/use-cases/chatbot/GetChatbotConversationMessagesUseCase';
+import { ChatbotController } from './infrastructure/http/controllers/ChatbotController';
+
 function bootstrap(): void {
   const port = parseInt(process.env['PORT'] ?? '3001', 10);
 
@@ -66,6 +74,8 @@ function bootstrap(): void {
   const storageRepo = new StorageRepository(supabase);
   const pollRepo = new PollRepository(supabase);
   const moderationRepo = new SupabaseModerationRepository(supabase);
+  const profileReadRepo = new SupabaseProfileReadRepository(supabase);
+  const chatbotRepo = new SupabaseChatbotRepository(supabase);
 
   // ── 3. Factory: Chain of Responsibility (compone las cadenas de validación) ──
   // Único punto donde se ensamblan y se inyectan los repositorios a la cadena.
@@ -91,6 +101,10 @@ function bootstrap(): void {
   const createPoll = new CreatePollUseCase(wallPostRepo, pollRepo, groupRepo);
   const voteInPoll = new VoteInPollUseCase(pollRepo, wallPostRepo, groupRepo);
   const closePoll = new ClosePollUseCase(pollRepo, wallPostRepo);
+
+  const generateChatbotResponse = new GenerateChatbotResponseUseCase(profileReadRepo, chatbotRepo);
+  const listChatbotConversations = new ListChatbotConversationsUseCase(chatbotRepo);
+  const getChatbotMessages = new GetChatbotConversationMessagesUseCase(chatbotRepo);
 
   // ── 5. HTTP server ─────────────────────────────────────────────────────────
   //    Create the raw HTTP server first so Socket.IO and Express share it.
@@ -134,13 +148,20 @@ function bootstrap(): void {
 
   const pollController = new PollController(createPoll, voteInPoll, closePoll, chatSubject);
 
+  const chatbotController = new ChatbotController(
+    generateChatbotResponse,
+    listChatbotConversations,
+    getChatbotMessages
+  );
+
   // ── 9. Express app ─────────────────────────────────────────────────────────
   const app = createExpressApp(
     conversationController,
     messageController,
     wallPostController,
     attachmentController,
-    pollController
+    pollController,
+    chatbotController
   );
 
   // Attach Express to the shared HTTP server
