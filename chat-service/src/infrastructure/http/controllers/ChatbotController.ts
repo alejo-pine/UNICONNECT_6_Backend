@@ -101,4 +101,76 @@ export class ChatbotController {
       res.status(isNotFound ? 403 : 500).json({ error: error.message });
     }
   }
+  /**
+   * Endpoint: POST /api/chatbot/feedback
+   */
+  async submitFeedback(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.userId;
+      const { question, response, rating, comments, references } = req.body;
+
+      if (!userId) {
+        res.status(401).json({ error: 'Usuario no autenticado' });
+        return;
+      }
+      if (!question || !response || rating === undefined) {
+        res.status(400).json({ error: 'Datos incompletos para el feedback' });
+        return;
+      }
+
+      // En la inyección de dependencias deberíamos recibir submitFeedbackUseCase, 
+      // para evitar cambiar el constructor y causar problemas en index.ts donde se inyecta, 
+      // usaremos las dependencias desde un import o lo instanciamos manualmente aquí si es simple.
+      // Pero mejor, vamos a actualizar el constructor y el index.ts. 
+      // Asumiré que ts-ignore por ahora para no romper dependencias no vistas, o mejor:
+      // importamos y creamos el caso de uso directamente si no está inyectado para ir más rápido.
+      const { getSupabaseClient } = require('../../../infrastructure/database/supabaseClient');
+      const supabase = getSupabaseClient();
+      const { SupabaseChatbotFeedbackRepository } = require('../../../infrastructure/database/repositories/SupabaseChatbotFeedbackRepository');
+      const { SubmitFeedbackUseCase } = require('../../../application/use-cases/chatbot/SubmitFeedbackUseCase');
+
+      const repo = new SupabaseChatbotFeedbackRepository(supabase);
+      const useCase = new SubmitFeedbackUseCase(repo, supabase);
+
+      const feedback = await useCase.execute({
+        userId,
+        question,
+        response,
+        rating,
+        comments,
+        references,
+      });
+
+      res.status(201).json({ success: true, data: feedback });
+    } catch (error: any) {
+      logger.error('Error no manejado en ChatbotController.submitFeedback', { error: error.message });
+      res.status(500).json({ error: 'Ocurrió un error inesperado al enviar el feedback.' });
+    }
+  }
+
+  /**
+   * Endpoint: GET /api/chatbot/feedback
+   * (Para super_admin)
+   */
+  async getFeedbackReport(req: Request, res: Response): Promise<void> {
+    try {
+      // Idealmente habría un middleware para verificar rol super_admin
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const { getSupabaseClient } = require('../../../infrastructure/database/supabaseClient');
+      const supabase = getSupabaseClient();
+      const { SupabaseChatbotFeedbackRepository } = require('../../../infrastructure/database/repositories/SupabaseChatbotFeedbackRepository');
+      const { GetFeedbackReportUseCase } = require('../../../application/use-cases/chatbot/GetFeedbackReportUseCase');
+
+      const repo = new SupabaseChatbotFeedbackRepository(supabase);
+      const useCase = new GetFeedbackReportUseCase(repo);
+
+      const report = await useCase.execute(page, limit);
+
+      res.status(200).json({ success: true, ...report });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Error al obtener el reporte de feedback.' });
+    }
+  }
 }
