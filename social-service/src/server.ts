@@ -6,6 +6,7 @@ import { initializeJWKS } from './utils/jwksClient';
 import { studyGroupRepository } from './study-groups/interfaces/http/dependencies';
 import studyGroupsRouter from './study-groups/interfaces/http/studyGroupRoutes';
 import eventsRouter from './events/interfaces/http/eventRoutes';
+import categoriesRouter from './events/interfaces/http/categoryRoutes';
 import forumRouter from './forum/interfaces/http/forumRoutes';
 import app from './app';
 import { initStudyGroupSocketServer } from './infrastructure/socket/studyGroupSocketServer';
@@ -23,6 +24,7 @@ app.use(express.json());
 // ROUTES
 // ============================================================================
 app.use('/study-groups', studyGroupsRouter);
+app.use('/events/categories', categoriesRouter);
 app.use('/events', eventsRouter);
 app.use('/forum', forumRouter);
 

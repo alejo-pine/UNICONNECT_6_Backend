@@ -11,7 +11,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction): void =
     const token = extractBearerToken(req.headers.authorization);
     const claims = verifyAccessToken(token);
 
-    (req as AuthenticatedRequest).user = { id: claims.sub, email: claims.email };
+    (req as AuthenticatedRequest).user = { id: claims.sub, email: claims.email, role: claims.role };
 
     next();
   } catch (error: unknown) {

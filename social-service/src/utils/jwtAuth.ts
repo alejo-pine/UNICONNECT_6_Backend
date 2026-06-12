@@ -6,6 +6,7 @@ export interface VerifiedAccessTokenClaims {
   sub: string;
   email: string;
   name?: string;
+  role: string;
   iss?: string;
   aud?: string | string[];
 }
@@ -38,6 +39,13 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
     const header = decoded?.header as JwtHeader | undefined;
     const algorithm = header?.alg;
 
+    const extractRole = (payload: any): string => {
+      if (typeof payload.role === 'string') return payload.role;
+      if (payload.app_metadata && typeof payload.app_metadata.role === 'string') return payload.app_metadata.role;
+      if (payload.user_metadata && typeof payload.user_metadata.role === 'string') return payload.user_metadata.role;
+      return 'user';
+    };
+
     if (algorithm === 'HS256') {
       const verified = jwt.verify(token, env.supabaseJwtSecret, {
         algorithms: ['HS256'],
@@ -53,6 +61,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
       const sub = typeof payload.sub === 'string' ? payload.sub : undefined;
       const email = typeof payload.email === 'string' ? payload.email : undefined;
       const name = typeof payload.name === 'string' ? payload.name : undefined;
+      const role = extractRole(payload);
 
       if (!sub || !email) {
         throw new AuthError(401, 'Token invalido');
@@ -62,6 +71,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
         sub,
         email,
         name,
+        role,
         iss: typeof payload.iss === 'string' ? payload.iss : undefined,
         aud: payload.aud,
       };
@@ -88,6 +98,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
     const sub = typeof payload.sub === 'string' ? payload.sub : undefined;
     const email = typeof payload.email === 'string' ? payload.email : undefined;
     const name = typeof payload.name === 'string' ? payload.name : undefined;
+    const role = extractRole(payload);
 
     if (!sub || !email) {
       throw new AuthError(401, 'Token invalido');
@@ -97,6 +108,7 @@ export const verifyAccessToken = (token: string): VerifiedAccessTokenClaims => {
       sub,
       email,
       name,
+      role,
       iss: typeof payload.iss === 'string' ? payload.iss : undefined,
       aud: payload.aud,
     };
