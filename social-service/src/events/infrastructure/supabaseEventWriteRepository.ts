@@ -7,6 +7,17 @@ export class SupabaseEventWriteRepository implements EventWriteRepositoryPort {
   async create(dto: CreateEventDto): Promise<string> {
     const db = eventDatabaseHandler.getClient();
 
+    // Resolver ID de categoría
+    const { data: catData, error: catError } = await db
+      .from('event_category')
+      .select('id')
+      .ilike('name', dto.category)
+      .maybeSingle();
+
+    if (catError || !catData) {
+      throw new Error(`Error: La categoría '${dto.category}' no es válida o no existe.`);
+    }
+
     const { data, error } = await db
       .from(this.TABLE)
       .insert({
@@ -16,7 +27,7 @@ export class SupabaseEventWriteRepository implements EventWriteRepositoryPort {
         event_date: dto.eventDate,
         event_time: dto.eventTime,
         location: dto.location ?? null,
-        category: dto.category,
+        category_id: catData.id,
         faculty: dto.faculty ?? null,
         profile_id: dto.profileId,
         capacity: 50,

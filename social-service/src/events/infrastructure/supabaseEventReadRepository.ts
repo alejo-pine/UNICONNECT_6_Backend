@@ -12,14 +12,14 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
 
     let query = db
       .from(TABLE)
-      .select('id, title, description, image_url, faculty, event_date, event_time, capacity, available_spots', { count: 'exact' });
+      .select('id, title, description, image_url, faculty, event_date, event_time, capacity, available_spots, event_category!inner(name)', { count: 'exact' });
 
     // Excluir eventos pasados
     const today = new Date().toISOString().split('T')[0];
     query = query.gte('event_date', today);
 
     if (categories && categories.length > 0) {
-      query = query.in('category', categories);
+      query = query.in('event_category.name', categories);
     }
 
     if (search && search.length >= 3) {
@@ -56,6 +56,7 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       event_time: string;
       capacity: number;
       available_spots: number;
+      event_category?: { name: string } | null;
     }>;
 
     const mappedData = rows.map((row) => ({
@@ -82,7 +83,7 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
     const { data, error } = await db
       .from(TABLE)
       .select(
-        'id, profile_id, title, description, image_url, event_date, event_time, location, category, faculty, created_at, capacity, available_spots, version, profile:profile_id(name)'
+        'id, profile_id, title, description, image_url, event_date, event_time, location, faculty, created_at, capacity, available_spots, version, profile:profile_id(name), event_category(name)'
       )
       .eq('id', id)
       .single();
@@ -123,16 +124,17 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       event_date: string;
       event_time: string;
       location: string | null;
-      category: string | null;
       faculty: string | null;
       created_at: string;
       capacity: number;
       available_spots: number;
       version: number;
       profile?: { name?: string | null } | Array<{ name?: string | null }> | null;
+      event_category?: { name: string } | null;
     };
 
     const profileData = Array.isArray(row.profile) ? row.profile[0] : row.profile;
+    const categoryName = row.event_category?.name ?? null;
 
     return {
       id: row.id,
@@ -143,7 +145,7 @@ export class SupabaseEventReadRepository implements EventReadRepositoryPort {
       eventDate: row.event_date,
       eventTime: row.event_time,
       location: row.location,
-      category: row.category,
+      category: categoryName,
       faculty: row.faculty,
       createdAt: row.created_at,
       organizerName: profileData?.name ?? null,
