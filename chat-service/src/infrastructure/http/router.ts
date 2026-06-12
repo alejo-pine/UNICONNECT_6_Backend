@@ -26,6 +26,8 @@ export function createRouter(
   router.post('/chatbot/message', (req, res) => chatbotController.sendMessage(req, res));
   router.get('/chatbot/conversations', (req, res) => chatbotController.listConversations(req, res));
   router.get('/chatbot/conversations/:id/messages', (req, res) => chatbotController.getConversationMessages(req, res));
+  router.post('/chatbot/feedback', (req, res) => chatbotController.submitFeedback(req, res));
+  router.get('/chatbot/feedback', (req, res) => chatbotController.getFeedbackReport(req, res));
 
   // ── Conversations ────────────────────────────────────────────────────────────
   // GET  /api/conversations
