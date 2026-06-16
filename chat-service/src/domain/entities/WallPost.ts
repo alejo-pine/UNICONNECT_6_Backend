@@ -9,13 +9,18 @@ export interface WallPostAttachment {
   uploadedAt: Date;
 }
 
+import { PollWithResults } from './Poll';
+
 export interface WallPost {
   id: string;
   groupId: string;
   senderId: string;
+  senderName: string;
+  avatarUrl: string | null;
   content: string | null;
   attachments: WallPostAttachment[];
   createdAt: Date;
+  poll?: PollWithResults;
 }
 
 export interface CreateWallAttachmentInput {

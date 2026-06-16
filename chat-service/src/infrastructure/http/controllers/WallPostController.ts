@@ -1,35 +1,36 @@
 // src/infrastructure/http/controllers/WallPostController.ts
 
 import { Request, Response, NextFunction } from 'express';
-import { Server as SocketIOServer } from 'socket.io';
 import { ListWallPostsUseCase } from '../../../application/use-cases/ListWallPostsUseCase';
 import { CreateWallPostUseCase } from '../../../application/use-cases/CreateWallPostUseCase';
+import { ListWallInboxUseCase } from '../../../application/use-cases/ListWallInboxUseCase';
 import { ValidationError } from '../../../shared/errors/ValidationError';
 import { CreateWallAttachmentInput } from '../../../domain/entities/WallPost';
-import {
-  ROOM_PREFIXES,
-  SOCKET_EVENTS,
-  DEFAULT_PAGE_LIMIT,
-} from '../../../shared/constants';
-import {
-  ServerToClientEvents,
-  ClientToServerEvents,
-  InterServerEvents,
-  SocketData,
-  WallNewPostPayload,
-} from '../../../types/socket/index.d';
+import { DEFAULT_PAGE_LIMIT } from '../../../shared/constants';
+import { SOCKET_EVENTS } from '../../../shared/constants';
+import { ISubject } from '../../../domain/observer/ISubject';
+import { WallNewPostPayload } from '../../../types/socket/index.d';
+import { MensajeBase } from '../../../domain/mensaje/MensajeBase';
+import { ArchivoAdjuntoDecorator } from '../../../domain/mensaje/ArchivoAdjuntoDecorator';
+import { MencionDecorator } from '../../../domain/mensaje/MencionDecorator';
 
 export class WallPostController {
   constructor(
     private readonly listWallPosts: ListWallPostsUseCase,
     private readonly createWallPost: CreateWallPostUseCase,
-    private readonly io: SocketIOServer<
-      ClientToServerEvents,
-      ServerToClientEvents,
-      InterServerEvents,
-      SocketData
-    >
+    private readonly listWallInbox: ListWallInboxUseCase,
+    /** Subject del patrón Observer — notifica a todos los observers suscritos (ej. WallSocketObserver). */
+    private readonly chatSubject: ISubject
   ) {}
+
+  getWallInbox = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const inbox = await this.listWallInbox.execute(req.userId);
+      res.status(200).json(inbox);
+    } catch (error) {
+      next(error);
+    }
+  };
 
   getPosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -81,11 +82,14 @@ export class WallPostController {
         attachments,
       });
 
-      // Emit real-time event to all members in the room
-      const payload: WallNewPostPayload = {
+      // ── Patrón Decorator: enriquecer el payload antes de notificar ──────────
+      // 1. Base: payload crudo serializado
+      const rawPayload: Record<string, unknown> = {
         id: post.id,
         groupId: post.groupId,
         senderId: post.senderId,
+        senderName: post.senderName,
+        avatarUrl: post.avatarUrl,
         content: post.content,
         attachments: post.attachments.map((a) => ({
           id: a.id,
@@ -96,9 +100,25 @@ export class WallPostController {
         createdAt: post.createdAt.toISOString(),
       };
 
-      this.io
-        .to(`${ROOM_PREFIXES.WALL}${groupId}`)
-        .emit(SOCKET_EVENTS.WALL_NEW_POST, payload);
+      // 2. ArchivoAdjuntoDecorator: normaliza el array de adjuntos
+      const conAdjuntos = new ArchivoAdjuntoDecorator(
+        new MensajeBase(rawPayload),
+        post.attachments.map((a) => ({
+          id: a.id,
+          fileName: a.fileName,
+          fileType: a.fileType,
+          fileSize: a.fileSize,
+        }))
+      );
+
+      // 3. MencionDecorator: extrae @menciones del content y agrega campo mentions[]
+      const conMenciones = new MencionDecorator(conAdjuntos);
+
+      // El payload final ya está decorado
+      const enrichedPayload = conMenciones.getPayload();
+
+      // ── Patrón Observer: notifica a los observers suscritos (WallSocketObserver) ───
+      this.chatSubject.notify(SOCKET_EVENTS.WALL_NEW_POST, enrichedPayload);
 
       res.status(201).json(post);
     } catch (error) {

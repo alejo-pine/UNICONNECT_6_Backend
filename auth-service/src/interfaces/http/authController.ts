@@ -33,6 +33,7 @@ const emitSessionToken = (profile: SyncedAuthProfile): string => {
       auth0_id: profile.auth0_id,
       email: profile.email,
       name: profile.name,
+      role: profile.role,
       iat: nowSeconds,
       type: 'session',
     },
@@ -149,12 +150,14 @@ export const syncAuthProfile = async (req: Request, res: Response): Promise<void
     userId: resolvedProfile.id,
     email: resolvedProfile.email,
     name: resolvedProfile.name,
+    role: resolvedProfile.role,
     created,
     needsOnboarding: created,
     data: {
       access_token: token,
       user_id: resolvedProfile.id,
       needs_onboarding: created,
+      role: resolvedProfile.role,
     },
   });
 };

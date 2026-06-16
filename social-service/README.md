@@ -14,6 +14,40 @@ SUPABASE_JWT_SECRET=your_jwt_secret
 NODE_ENV=development
 ```
 
+### Run integration tests:
+```bash
+npm run test:integration
+```
+
+## Guía OpenAPI y Tipos Compartidos (US-DEV01)
+
+El backend expone documentación viva en `/docs` generada desde anotaciones Swagger JSDoc.
+
+### ¿Cómo agregar un nuevo endpoint y actualizar el Frontend?
+
+1. **Agrega el endpoint** en el backend (ej. `social-service/src/.../controller.ts`).
+2. **Documenta el endpoint** usando sintaxis JSDoc `@openapi` sobre la declaración de la ruta (ej. en `studyGroupRoutes.ts`):
+   ```js
+   /**
+    * @openapi
+    * /study-groups/new-feature:
+    *   post:
+    *     summary: Mi nuevo feature
+    * ...
+    */
+   ```
+3. **Genera el nuevo contrato:** Corre `npm run build` o `npm run build:openapi` en el backend. Esto actualizará `docs/openapi.json`.
+4. **Regenera los tipos del Frontend:** Ve a `C:\uniconnect_frontend\UNICONNECT_6_Frontend\api-types` y ejecuta:
+   ```bash
+   npm run generate
+   npm run build
+   ```
+5. **Úsalos en Dashboard/Mobile:** En tu código React, importa los tipos o esquemas Zod directamente de la librería compartida:
+   ```ts
+   import { components } from 'uniconnect-api-types';
+   type NewFeatureResponse = components["schemas"]["NewFeatureDto"];
+   ```
+
 ## Installation
 
 ```bash
@@ -86,3 +120,14 @@ Uses Supabase with the following tables:
 - `event` - Events
 - `profile_subject` - User enrollments
 - `subject` - Subjects/Courses
+- `notifications` - Persisted user notifications
+
+---
+
+## Patrones de Diseño
+
+Consulta la documentación específica de cada patrón implementado en el microservicio:
+
+- [📘 Patrón Observer — Eventos de Dominio de Grupos de Estudio](./docs/OBSERVER_PATTERN.md)
+
+

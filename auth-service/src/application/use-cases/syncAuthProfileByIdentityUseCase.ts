@@ -1,3 +1,4 @@
+import { env } from '../../config/env';
 import { eventLogger } from '../../utils/eventLogger';
 import { SyncAuthProfileData, SyncAuthProfileInput } from '../../domain/entities/authProfile';
 import { AuthRepositoryPort } from '../../domain/ports/authRepositoryPort';
@@ -8,6 +9,14 @@ export class SyncAuthProfileByIdentityUseCase {
 
   async execute(input: SyncAuthProfileInput): Promise<ServiceResult<SyncAuthProfileData>> {
     try {
+      if (!input.email.endsWith(`@${env.allowedDomain}`)) {
+        return {
+          data: null,
+          error: `Solo se permiten correos institucionales del dominio @${env.allowedDomain}`,
+          statusCode: 403,
+        };
+      }
+
       let resolvedProfile = await this.authRepository.findProfileByAuth0Id(input.auth0Id);
       let created = false;
 

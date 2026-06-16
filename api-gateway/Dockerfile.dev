@@ -1,0 +1,22 @@
+# ──────────────────────────────────────────────
+# api-gateway — Dockerfile.dev (desarrollo con hot-reload)
+# ──────────────────────────────────────────────
+# El código fuente se monta via volumen desde docker-compose;
+# NO se copia aquí para que los cambios locales se reflejen al vuelo.
+# tsx watch reinicia el proceso automáticamente ante cualquier cambio en src/.
+# ──────────────────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Instala TODAS las dependencias (incluyendo devDependencies: tsx, typescript, etc.)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# El directorio src/ NO se copia — se monta vía volumen en docker-compose.yml
+# Esto garantiza hot-reload instantáneo sin necesidad de rebuild de la imagen.
+
+EXPOSE ${PORT:-3000}
+
+# Usa el script "dev" definido en package.json: tsx watch src/server.ts
+CMD ["npm", "run", "dev"]

@@ -30,4 +30,14 @@ export interface IMessageRepository {
    * Used to verify access when fetching attachment signed URLs.
    */
   findConversationIdByMessageId(messageId: string): Promise<string | null>;
+
+  /**
+   * Counts the total number of direct messages sent by a user.
+   */
+  countSentMessages(senderId: string): Promise<number>;
+
+  /**
+   * Counts the number of messages sent by a user since a given date.
+   */
+  countRecentMessages(senderId: string, since: Date): Promise<number>;
 }

@@ -1,0 +1,76 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-backend:
+    name: Backend Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: |
+            auth-service/package-lock.json
+            social-service/package-lock.json
+
+      - name: Install dependencies (auth-service)
+        working-directory: ./auth-service
+        run: npm ci
+
+      - name: Install dependencies (social-service)
+        working-directory: ./social-service
+        run: npm ci
+
+      - name: Create minimum .env for auth-service
+        working-directory: ./auth-service
+        run: |
+          cat << 'EOF' > .env
+          SUPABASE_URL=http://localhost:54321
+          SUPABASE_ANON_KEY=dummy-anon-key
+          SUPABASE_SERVICE_ROLE_KEY=dummy-service-role-key
+          SUPABASE_JWT_SECRET=dummy-jwt-secret-at-least-32-chars-long
+          AUTH0_DOMAIN=dummy.auth0.com
+          AUTH0_ISSUER=https://dummy.auth0.com/
+          AUTH0_AUDIENCE=https://dummy-api
+          ALLOWED_DOMAIN=ucaldas.edu.co
+          PORT=3001
+          NODE_ENV=test
+          EOF
+
+      - name: Create minimum .env for social-service
+        working-directory: ./social-service
+        run: |
+          cat << 'EOF' > .env
+          SUPABASE_URL=http://localhost:54321
+          SUPABASE_ANON_KEY=dummy-anon-key
+          SUPABASE_SERVICE_ROLE_KEY=dummy-service-role-key
+          SUPABASE_JWT_SECRET=dummy-jwt-secret-at-least-32-chars-long
+          PORT=3003
+          NODE_ENV=test
+          BACKEND_PUBLIC_URL=http://localhost:3000
+          EOF
+
+      - name: Test auth-service (Integration)
+        working-directory: ./auth-service
+        run: npm run test:integration
+
+      - name: Test social-service (Unit)
+        working-directory: ./social-service
+        run: npm run test:unit
+
+      - name: Test social-service (Integration)
+        working-directory: ./social-service
+        run: npm run test:integration

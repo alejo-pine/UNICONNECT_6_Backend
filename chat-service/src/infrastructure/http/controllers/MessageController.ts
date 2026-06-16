@@ -1,37 +1,25 @@
 // src/infrastructure/http/controllers/MessageController.ts
 
 import { Request, Response, NextFunction } from 'express';
-import { Server as SocketIOServer } from 'socket.io';
 import { ListMessagesUseCase } from '../../../application/use-cases/ListMessagesUseCase';
 import { SendMessageUseCase } from '../../../application/use-cases/SendMessageUseCase';
 import { ValidationError } from '../../../shared/errors/ValidationError';
 import { NotFoundError } from '../../../shared/errors/NotFoundError';
 import { IConversationRepository } from '../../../domain/repositories/IConversationRepository';
 import { CreateAttachmentInput } from '../../../domain/entities/Message';
-import {
-  ROOM_PREFIXES,
-  SOCKET_EVENTS,
-  DEFAULT_PAGE_LIMIT,
-} from '../../../shared/constants';
-import {
-  ServerToClientEvents,
-  ClientToServerEvents,
-  InterServerEvents,
-  SocketData,
-  DmNewMessagePayload,
-} from '../../../types/socket/index.d';
+import { DEFAULT_PAGE_LIMIT, SOCKET_EVENTS } from '../../../shared/constants';
+import { ISubject } from '../../../domain/observer/ISubject';
+import { MensajeBase } from '../../../domain/mensaje/MensajeBase';
+import { ArchivoAdjuntoDecorator } from '../../../domain/mensaje/ArchivoAdjuntoDecorator';
+import { MencionDecorator } from '../../../domain/mensaje/MencionDecorator';
 
 export class MessageController {
   constructor(
     private readonly listMessages: ListMessagesUseCase,
     private readonly sendMessage: SendMessageUseCase,
     private readonly conversationRepo: IConversationRepository,
-    private readonly io: SocketIOServer<
-      ClientToServerEvents,
-      ServerToClientEvents,
-      InterServerEvents,
-      SocketData
-    >
+    /** Subject del patrón Observer para DM — instancia independiente del Subject del Wall. */
+    private readonly dmSubject: ISubject
   ) {}
 
   getMessages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -96,8 +84,9 @@ export class MessageController {
         attachments,
       });
 
-      // Emit real-time event to all participants in the room
-      const payload: DmNewMessagePayload = {
+      // ── Patrón Decorator: enriquecer el payload antes de notificar ──────────
+      // 1. Base: payload crudo serializado
+      const rawPayload: Record<string, unknown> = {
         id: message.id,
         conversationId: message.conversationId,
         senderId: message.senderId,
@@ -111,9 +100,25 @@ export class MessageController {
         createdAt: message.createdAt.toISOString(),
       };
 
-      this.io
-        .to(`${ROOM_PREFIXES.CONVERSATION}${conversationId}`)
-        .emit(SOCKET_EVENTS.DM_NEW_MESSAGE, payload);
+      // 2. ArchivoAdjuntoDecorator: normaliza el array de adjuntos
+      const conAdjuntos = new ArchivoAdjuntoDecorator(
+        new MensajeBase(rawPayload),
+        message.attachments.map((a) => ({
+          id: a.id,
+          fileName: a.fileName,
+          fileType: a.fileType,
+          fileSize: a.fileSize,
+        }))
+      );
+
+      // 3. MencionDecorator: extrae @menciones del content y agrega campo mentions[]
+      const conMenciones = new MencionDecorator(conAdjuntos);
+
+      // El payload final ya está decorado (attachments normalizados + mentions[])
+      const enrichedPayload = conMenciones.getPayload();
+
+      // ── Patrón Observer: notificar al DmSocketObserver suscrito ───────────────
+      this.dmSubject.notify(SOCKET_EVENTS.DM_NEW_MESSAGE, enrichedPayload);
 
       res.status(201).json(message);
     } catch (error) {

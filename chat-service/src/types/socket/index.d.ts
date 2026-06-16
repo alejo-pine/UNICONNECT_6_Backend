@@ -19,6 +19,8 @@ export interface WallNewPostPayload {
   id: string;
   groupId: string;
   senderId: string;
+  senderName: string;
+  avatarUrl: string | null;
   content: string | null;
   attachments: Array<{
     id: string;
@@ -37,6 +39,9 @@ export interface SocketErrorPayload {
 export interface ServerToClientEvents {
   'dm:new_message': (payload: DmNewMessagePayload) => void;
   'wall:new_post': (payload: WallNewPostPayload) => void;
+  'encuesta:creada': (payload: any) => void;
+  'encuesta:votoRegistrado': (payload: any) => void;
+  'encuesta:cerrada': (payload: any) => void;
   error: (payload: SocketErrorPayload) => void;
 }
 

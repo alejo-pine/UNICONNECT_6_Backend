@@ -8,6 +8,8 @@ export interface EventCardSummaryApiResponse {
   faculty: string | null;
   event_date: string;
   event_time: string;
+  capacity: number;
+  available_spots: number;
 }
 
 export interface EventDetailApiResponse {
@@ -23,6 +25,10 @@ export interface EventDetailApiResponse {
   faculty: string | null;
   created_at: string;
   organizer_name: string | null;
+  capacity: number;
+  available_spots: number;
+  isRegistered?: boolean;
+  version: number;
 }
 
 export const toEventCardSummaryApiResponse = (input: EventCardSummary): EventCardSummaryApiResponse => ({
@@ -33,6 +39,8 @@ export const toEventCardSummaryApiResponse = (input: EventCardSummary): EventCar
   faculty: input.faculty,
   event_date: input.eventDate,
   event_time: input.eventTime,
+  capacity: input.capacity,
+  available_spots: input.availableSpots,
 });
 
 export const toEventCardSummaryApiResponseList = (
@@ -52,4 +60,8 @@ export const toEventDetailApiResponse = (input: EventDetail): EventDetailApiResp
   faculty: input.faculty,
   created_at: input.createdAt,
   organizer_name: input.organizerName,
+  capacity: input.capacity,
+  available_spots: input.availableSpots,
+  isRegistered: input.isRegistered,
+  version: input.version,
 });

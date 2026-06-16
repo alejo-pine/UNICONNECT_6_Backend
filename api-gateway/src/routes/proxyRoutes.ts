@@ -4,6 +4,23 @@ import { SERVICES } from '../config/services';
 
 const router = Router();
 
+// OpenAPI docs proxy endpoints
+router.get('/auth/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE, '/openapi.json');
+});
+router.get('/profiles/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.PROFILE_SERVICE, '/openapi.json');
+});
+router.get('/study-groups/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, '/openapi.json');
+});
+router.get('/notifications/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.NOTIFICATION_SERVICE, '/openapi.json');
+});
+router.get('/chat/openapi.json', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.CHAT_SERVICE, '/openapi.json');
+});
+
 const proxyRequest = async (
   req: Request,
   res: Response,
@@ -34,13 +51,21 @@ const proxyRequest = async (
     // Eliminar headers de caché que causan 304
     delete headers['if-none-match'];
     delete headers['if-modified-since'];
+    // Forzar respuesta sin compresión desde los microservicios
+    // para evitar que axios reciba bytes gzip y los reenvíe corruptos
+    delete headers['accept-encoding'];
+    headers['accept-encoding'] = 'identity';
+
+    const isMultipart = req.headers['content-type']?.startsWith('multipart/form-data');
 
     const config = {
       method: req.method as any,
       url: targetUrl,
       headers,
-      data: req.body,
+      data: isMultipart ? req : req.body,
       validateStatus: () => true,
+      // Desactivar descompresión automática de axios para control total
+      decompress: true,
     };
 
     console.log(`[ProxyRequest] Enviando petición a microservicio...`);
@@ -75,6 +100,25 @@ router.all('/api/auth', async (req: Request, res: Response) => {
 
 router.all('/api/auth/*', async (req: Request, res: Response) => {
   // Remover /api del path antes de reenviar
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE, pathWithoutApi);
+});
+
+// Admin proxy routes -> Directed to auth-service where admin routes live
+router.all('/admin', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE);
+});
+
+router.all('/admin/*', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE);
+});
+
+router.all('/api/admin', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.AUTH_SERVICE, pathWithoutApi);
+});
+
+router.all('/api/admin/*', async (req: Request, res: Response) => {
   const pathWithoutApi = req.path.replace(/^\/api/, '');
   await proxyRequest(req, res, SERVICES.AUTH_SERVICE, pathWithoutApi);
 });
@@ -223,9 +267,46 @@ router.all('/api/study-groups/*', async (req: Request, res: Response) => {
   await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
 });
 
+router.all('/forum', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE);
+});
+
+router.all('/forum/*', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE);
+});
+
+router.all('/api/forum', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
+});
+
+router.all('/api/forum/*', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.SOCIAL_SERVICE, pathWithoutApi);
+});
+
+router.all('/notifications', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.NOTIFICATION_SERVICE);
+});
+
+router.all('/notifications/*', async (req: Request, res: Response) => {
+  await proxyRequest(req, res, SERVICES.NOTIFICATION_SERVICE);
+});
+
+router.all('/api/notifications', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.NOTIFICATION_SERVICE, pathWithoutApi);
+});
+
+router.all('/api/notifications/*', async (req: Request, res: Response) => {
+  const pathWithoutApi = req.path.replace(/^\/api/, '');
+  await proxyRequest(req, res, SERVICES.NOTIFICATION_SERVICE, pathWithoutApi);
+});
+
 router.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
+    version: '1.0.0',
     service: 'api-gateway',
     timestamp: new Date().toISOString(),
   });

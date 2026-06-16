@@ -3,7 +3,7 @@ import { SyncedAuthProfile } from '../domain/entities/authProfile';
 import { AuthProfileUpdates, AuthRepositoryPort } from '../domain/ports/authRepositoryPort';
 
 const PROFILE_FIELDS =
-  'id, auth0_id, email, name, avatar_url, career, semester, phone_number, created_at';
+  'id, auth0_id, email, name, role, avatar_url, career, semester, phone_number, created_at';
 
 export class SupabaseAuthRepository implements AuthRepositoryPort {
   async findProfileByAuth0Id(auth0Id: string): Promise<SyncedAuthProfile | null> {
@@ -59,6 +59,7 @@ export class SupabaseAuthRepository implements AuthRepositoryPort {
         auth0_id: auth0Id,
         email,
         name,
+        onboarding_required: true,
       })
       .select(PROFILE_FIELDS)
       .single();

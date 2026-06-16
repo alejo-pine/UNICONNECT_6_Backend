@@ -4,9 +4,11 @@ import cors, { CorsOptions } from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/authRoutes';
+import adminRoutes from './routes/adminRoutes';
 import app from './app';
 import { Server } from 'http';
 import { initializeJWKS } from './utils/jwksClient';
+import { swaggerSpec } from './config/swagger';
 
 type RequestError = Error & {
   statusCode?: number;
@@ -75,13 +77,23 @@ const configureApp = (): typeof app => {
   app.get('/health', (_req: Request, res: Response): void => {
     res.status(200).json({
       status: 'ok',
+      version: '1.0.0',
       service: 'auth-service',
       timestamp: new Date().toISOString(),
     });
   });
 
+  // OpenAPI endpoint
+  app.get('/openapi.json', (_req: Request, res: Response): void => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+
   // Auth routes
   app.use('/auth', authRoutes);
+
+  // Admin routes — protected by authMiddleware + requireRole('super_admin') (US-EV01)
+  app.use('/admin', adminRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response): void => {

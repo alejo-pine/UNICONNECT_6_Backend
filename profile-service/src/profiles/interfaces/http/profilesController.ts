@@ -13,10 +13,11 @@ export const getProfiles = async (_req: Request, res: Response): Promise<void> =
   sendServiceResult(res, result, 200);
 };
 
-export const getProfileById = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+export const getProfileById = async (req: Request<{ id: string }, any, any, { vista?: string }>, res: Response): Promise<void> => {
   const { id } = req.params;
+  const { vista } = req.query;
 
-  const result = await profileDependencies.getProfileByIdUseCase.execute(id);
+  const result = await profileDependencies.getProfileByIdUseCase.execute(id, vista as string | undefined);
   sendServiceResult(res, result, 200);
 };
 

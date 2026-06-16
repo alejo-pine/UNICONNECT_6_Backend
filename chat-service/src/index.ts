@@ -13,6 +13,7 @@ import { MessageRepository } from './infrastructure/database/repositories/Messag
 import { WallPostRepository } from './infrastructure/database/repositories/WallPostRepository';
 import { GroupRepository } from './infrastructure/database/repositories/GroupRepository';
 import { StorageRepository } from './infrastructure/database/repositories/StorageRepository';
+import { SupabaseModerationRepository } from './infrastructure/database/repositories/SupabaseModerationRepository';
 
 // ── Application: Use cases ───────────────────────────────────────────────────
 import { ListConversationsUseCase } from './application/use-cases/ListConversationsUseCase';
@@ -22,18 +23,42 @@ import { ListMessagesUseCase } from './application/use-cases/ListMessagesUseCase
 import { SendMessageUseCase } from './application/use-cases/SendMessageUseCase';
 import { ListWallPostsUseCase } from './application/use-cases/ListWallPostsUseCase';
 import { CreateWallPostUseCase } from './application/use-cases/CreateWallPostUseCase';
+import { ListWallInboxUseCase } from './application/use-cases/ListWallInboxUseCase';
 import { GetDmAttachmentUrlUseCase } from './application/use-cases/GetDmAttachmentUrlUseCase';
 import { GetWallAttachmentUrlUseCase } from './application/use-cases/GetWallAttachmentUrlUseCase';
 
 // ── Infrastructure: Socket.IO ─────────────────────────────────────────────────
 import { initSocketServer } from './infrastructure/socket/socketServer';
+import { WallSocketObserver } from './infrastructure/socket/WallSocketObserver';
+import { DmSocketObserver } from './infrastructure/socket/DmSocketObserver';
+
+// ── Domain: Observer pattern ──────────────────────────────────────────────────
+import { ChatSubject } from './domain/observer/ChatSubject';
+
+// ── Infrastructure: Factories (Chain of Responsibility) ───────────────────────
+import { ValidationChainFactory } from './infrastructure/factories/ValidationChainFactory';
 
 // ── Infrastructure: HTTP ──────────────────────────────────────────────────────
 import { ConversationController } from './infrastructure/http/controllers/ConversationController';
 import { MessageController } from './infrastructure/http/controllers/MessageController';
 import { WallPostController } from './infrastructure/http/controllers/WallPostController';
 import { AttachmentController } from './infrastructure/http/controllers/AttachmentController';
+import { PollController } from './infrastructure/http/controllers/PollController';
+import { PollRepository } from './infrastructure/database/repositories/PollRepository';
+import { CreatePollUseCase } from './application/use-cases/CreatePollUseCase';
+import { VoteInPollUseCase } from './application/use-cases/VoteInPollUseCase';
+import { ClosePollUseCase } from './application/use-cases/ClosePollUseCase';
+import { PollSocketObserver } from './infrastructure/socket/PollSocketObserver';
+import { PollExpirationScheduler } from './infrastructure/services/PollExpirationScheduler';
 import { createExpressApp } from './infrastructure/http/server';
+
+// ── Chatbot ───────────────────────────────────────────────────────────────────
+import { SupabaseProfileReadRepository } from './infrastructure/database/repositories/SupabaseProfileReadRepository';
+import { SupabaseChatbotRepository } from './infrastructure/database/repositories/SupabaseChatbotRepository';
+import { GenerateChatbotResponseUseCase } from './application/use-cases/chatbot/GenerateChatbotResponseUseCase';
+import { ListChatbotConversationsUseCase } from './application/use-cases/chatbot/ListChatbotConversationsUseCase';
+import { GetChatbotConversationMessagesUseCase } from './application/use-cases/chatbot/GetChatbotConversationMessagesUseCase';
+import { ChatbotController } from './infrastructure/http/controllers/ChatbotController';
 
 function bootstrap(): void {
   const port = parseInt(process.env['PORT'] ?? '3001', 10);
@@ -47,26 +72,63 @@ function bootstrap(): void {
   const wallPostRepo = new WallPostRepository(supabase);
   const groupRepo = new GroupRepository(supabase);
   const storageRepo = new StorageRepository(supabase);
+  const pollRepo = new PollRepository(supabase);
+  const moderationRepo = new SupabaseModerationRepository(supabase);
+  const profileReadRepo = new SupabaseProfileReadRepository(supabase);
+  const chatbotRepo = new SupabaseChatbotRepository(supabase);
 
-  // ── 3. Use cases (injected with repository interfaces) ─────────────────────
+  // ── 3. Factory: Chain of Responsibility (compone las cadenas de validación) ──
+  // Único punto donde se ensamblan y se inyectan los repositorios a la cadena.
+  const validationChainFactory = new ValidationChainFactory(
+    conversationRepo,
+    groupRepo,
+    messageRepo,
+    wallPostRepo,
+    moderationRepo
+  );
+
+  // ── 4. Use cases (injected with repository interfaces) ─────────────────────
   const listConversations = new ListConversationsUseCase(conversationRepo);
   const findOrCreateConversation = new FindOrCreateConversationUseCase(conversationRepo);
   const getConversation = new GetConversationUseCase(conversationRepo);
   const listMessages = new ListMessagesUseCase(conversationRepo, messageRepo);
-  const sendMessage = new SendMessageUseCase(conversationRepo, messageRepo);
+  const sendMessage = new SendMessageUseCase(messageRepo, validationChainFactory, moderationRepo, profileReadRepo);
   const listWallPosts = new ListWallPostsUseCase(wallPostRepo, groupRepo);
-  const createWallPost = new CreateWallPostUseCase(wallPostRepo, groupRepo);
+  const createWallPost = new CreateWallPostUseCase(wallPostRepo, validationChainFactory, moderationRepo, profileReadRepo);
+  const listWallInbox = new ListWallInboxUseCase(groupRepo);
   const getDmAttachmentUrl = new GetDmAttachmentUrlUseCase(messageRepo, conversationRepo, storageRepo);
   const getWallAttachmentUrl = new GetWallAttachmentUrlUseCase(wallPostRepo, groupRepo, storageRepo);
+  const createPoll = new CreatePollUseCase(wallPostRepo, pollRepo, groupRepo);
+  const voteInPoll = new VoteInPollUseCase(pollRepo, wallPostRepo, groupRepo);
+  const closePoll = new ClosePollUseCase(pollRepo, wallPostRepo);
 
-  // ── 4. HTTP server ─────────────────────────────────────────────────────────
+  const generateChatbotResponse = new GenerateChatbotResponseUseCase(profileReadRepo, chatbotRepo);
+  const listChatbotConversations = new ListChatbotConversationsUseCase(chatbotRepo);
+  const getChatbotMessages = new GetChatbotConversationMessagesUseCase(chatbotRepo);
+
+  // ── 5. HTTP server ─────────────────────────────────────────────────────────
   //    Create the raw HTTP server first so Socket.IO and Express share it.
   const httpServer = createServer();
 
-  // ── 5. Socket.IO server (singleton, shares httpServer) ─────────────────────
+  // ── 6. Socket.IO server (singleton, shares httpServer) ─────────────────────
   const io = initSocketServer(httpServer, conversationRepo, groupRepo);
 
-  // ── 6. Controllers (need io to emit events after REST operations) ───────────
+  // ── 7. Observer pattern ────────────────────────────────────────────────────
+  //  Canal WALL: chatSubject → WallSocketObserver → sala "wall:<id>"
+  const chatSubject = new ChatSubject();
+  chatSubject.subscribe(new WallSocketObserver(io));
+  chatSubject.subscribe(new PollSocketObserver(io));
+
+  //  Canal DM: dmSubject → DmSocketObserver → sala "conversation:<id>"
+  //  Instancia TOTALMENTE INDEPENDIENTE de chatSubject: lista de observers
+  //  distinta, sin canal compartido ni estado compartido.
+  const dmSubject = new ChatSubject();
+  dmSubject.subscribe(new DmSocketObserver(io));
+
+  const pollExpirationScheduler = new PollExpirationScheduler(pollRepo, closePoll, chatSubject);
+  pollExpirationScheduler.start();
+
+  // ── 8. Controllers (inject subjects, not io directly) ───────────────────────
   const conversationController = new ConversationController(
     listConversations,
     findOrCreateConversation,
@@ -77,19 +139,29 @@ function bootstrap(): void {
     listMessages,
     sendMessage,
     conversationRepo,
-    io
+    dmSubject
   );
 
-  const wallPostController = new WallPostController(listWallPosts, createWallPost, io);
+  const wallPostController = new WallPostController(listWallPosts, createWallPost, listWallInbox, chatSubject);
 
   const attachmentController = new AttachmentController(getDmAttachmentUrl, getWallAttachmentUrl);
 
-  // ── 7. Express app ─────────────────────────────────────────────────────────
+  const pollController = new PollController(createPoll, voteInPoll, closePoll, chatSubject);
+
+  const chatbotController = new ChatbotController(
+    generateChatbotResponse,
+    listChatbotConversations,
+    getChatbotMessages
+  );
+
+  // ── 9. Express app ─────────────────────────────────────────────────────────
   const app = createExpressApp(
     conversationController,
     messageController,
     wallPostController,
-    attachmentController
+    attachmentController,
+    pollController,
+    chatbotController
   );
 
   // Attach Express to the shared HTTP server
