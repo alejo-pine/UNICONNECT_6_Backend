@@ -25,7 +25,8 @@ export interface IModerationRepository {
   contarBloqueosRecientes(userId: string, since: Date): Promise<number>;
 
   /**
-   * Obtiene el ID del usuario con rol super_admin.
+   * Obtiene los IDs de todos los usuarios con rol de super_admin.
+   * Útil para notificaciones de escalamiento de moderación.
    */
-  getSuperAdminId(): Promise<string | null>;
+  getSuperAdminsIds(): Promise<string[]>;
 }

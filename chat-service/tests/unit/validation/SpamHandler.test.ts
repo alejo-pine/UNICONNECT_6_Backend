@@ -13,7 +13,7 @@ describe('SpamHandler', () => {
       registrarBloqueo: jest.fn().mockResolvedValue(undefined),
       estaBloqueado: jest.fn().mockResolvedValue(null), // Por defecto no está bloqueado
       contarBloqueosRecientes: jest.fn(),
-      getSuperAdminId: jest.fn(),
+      getSuperAdminsIds: jest.fn(),
     };
 
     countRecentMock = jest.fn();

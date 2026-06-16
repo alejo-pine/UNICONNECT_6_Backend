@@ -13,7 +13,7 @@ describe('PalabrasProhibidasHandler', () => {
       registrarBloqueo: jest.fn().mockResolvedValue(undefined),
       estaBloqueado: jest.fn(),
       contarBloqueosRecientes: jest.fn(),
-      getSuperAdminId: jest.fn(),
+      getSuperAdminsIds: jest.fn(),
     };
 
     // Inicializamos el handler usando la configuración real de constantes
