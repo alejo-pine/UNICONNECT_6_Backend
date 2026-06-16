@@ -11,6 +11,7 @@ export interface CreateEventInput {
   category: string;
   faculty?: string | null;
   profileId: string;
+  capacity?: number;
 }
 
 export class CreateEventUseCase {
@@ -32,6 +33,7 @@ export class CreateEventUseCase {
         category: input.category,
         faculty: input.faculty ?? null,
         profileId: input.profileId,
+        capacity: input.capacity,
       });
 
       // 2. Notify observers (sends notifications to subscribers of this category)

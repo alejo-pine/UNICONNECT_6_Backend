@@ -8,6 +8,7 @@ export interface CreateEventDto {
   category: string;
   faculty: string | null;
   profileId: string;
+  capacity?: number;
 }
 
 export interface EventWriteRepositoryPort {

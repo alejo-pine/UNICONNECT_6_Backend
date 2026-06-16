@@ -30,8 +30,8 @@ export class SupabaseEventWriteRepository implements EventWriteRepositoryPort {
         category_id: catData.id,
         faculty: dto.faculty ?? null,
         profile_id: dto.profileId,
-        capacity: 50,
-        available_spots: 50,
+        capacity: dto.capacity ?? 50,
+        available_spots: dto.capacity ?? 50,
         version: 1,
       })
       .select('id')
