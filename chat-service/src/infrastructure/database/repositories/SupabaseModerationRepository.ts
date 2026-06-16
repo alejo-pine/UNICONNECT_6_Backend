@@ -65,19 +65,17 @@ export class SupabaseModerationRepository implements IModerationRepository {
     return count ?? 0;
   }
 
-  async getSuperAdminId(): Promise<string | null> {
+  async getSuperAdminsIds(): Promise<string[]> {
     const { data, error } = await this.supabase
       .from('profile')
       .select('id')
-      .eq('role', 'super_admin')
-      .limit(1)
-      .maybeSingle();
+      .eq('role', 'super_admin');
 
     if (error) {
-      logger.error('Error obteniendo ID del super admin', { error: error.message });
-      return null;
+      logger.error('Error obteniendo IDs de super admins', { error: error.message });
+      return [];
     }
 
-    return data?.id ?? null;
+    return data ? data.map(row => row.id) : [];
   }
 }

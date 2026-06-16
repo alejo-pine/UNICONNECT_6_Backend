@@ -33,7 +33,7 @@ describe('ValidationPipeline Completo', () => {
       registrarBloqueo: jest.fn().mockResolvedValue(undefined),
       estaBloqueado: jest.fn().mockResolvedValue(null),
       contarBloqueosRecientes: jest.fn(),
-      getSuperAdminId: jest.fn(),
+      getSuperAdminsIds: jest.fn(),
     };
 
     // 1. Instanciación
