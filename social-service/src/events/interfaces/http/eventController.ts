@@ -106,7 +106,7 @@ export const unsubscribe = async (req: AuthenticatedRequest, res: Response): Pro
 };
 
 export const createEvent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { title, description, imageUrl, eventDate, eventTime, location, category, faculty } = req.body;
+  const { title, description, imageUrl, eventDate, eventTime, location, category, faculty, capacity } = req.body;
   const profileId = req.user?.id;
 
   if (!title || !category || !eventDate || !eventTime || !profileId) {
@@ -123,6 +123,7 @@ export const createEvent = async (req: AuthenticatedRequest, res: Response): Pro
     location,
     category,
     faculty,
+    capacity,
     profileId
   });
 
